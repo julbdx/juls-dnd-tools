@@ -28,7 +28,7 @@
   "download": "https://github.com/jul.bdx/juls-dnd-tools/releases/download/1.0.0/module.zip",
   "manifest": "https://github.com/jul.bdx/juls-dnd-tools/module.json",
   "readme": "https://raw.githubusercontent.com/jul.bdx/juls-dnd-tools/main/README.md",
-  "id": "juls-tools",
+  "id": "juls-dnd-tools",
   "compatibility": {
     "minimum": "10",
     "verified": "11.315",

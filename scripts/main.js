@@ -8,7 +8,7 @@ import { registerSettings } from "./settings.js";
 function isTrustedManualRollForActor(actor)
 {
    if (actor)
-      return actor.collections.items.some(item => item.name === "Jets manuels"); // Remplacer par l'identifiant correct si nécessaire.
+      return actor.collections.items.some(item => item.name === "Jets manuels" || item.name === "Manual rolls"); // Remplacer par l'identifiant correct si nécessaire.
 
    return false;
 }
