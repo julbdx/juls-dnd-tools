@@ -1,0 +1,36 @@
+{
+  "title": "Jul's tools",
+  "description": "Add a few QOL functionality to DND5e system",
+  "authors": [
+    {
+      "name": "Julien Vissaux",
+      "email": "julien@skouat.net",
+      "url": "https://github.com/jul.bdx",
+      "flags": {}
+    }
+  ],
+  "version": "1.0.0",
+  "socket": false,
+  "esmodules": [
+    "scripts/main.js"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json",
+      "flags": {}
+    }
+  ],
+  "url": "https://github.com/jul.bdx/juls-tools",
+  "bugs": "https://github.com/jul.bdx/juls-tools/issues",
+  "changelog": "https://github.com/jul.bdx/juls-dnd-tools/releases",
+  "download": "https://github.com/jul.bdx/juls-dnd-tools/releases/download/1.1.2/module.zip",
+  "manifest": "https://github.com/jul.bdx/juls-dnd-tools/releases/download/1.1.2/module.json",
+  "readme": "https://raw.githubusercontent.com/jul.bdx/juls-dnd-tools/main/README.md",
+  "id": "juls-tools",
+  "compatibility": {
+    "minimum": "11.0",
+    "verified": "11.315"
+  }
+}
