@@ -1,0 +1,23 @@
+  .my-frame {
+    position: absolute;    
+    border: 8px solid white !important;
+  }
+
+  .my-frame-bottom {
+    bottom: -33vh;
+    right: -10vw;
+    z-index: 10;
+  }
+
+  .my-frame-top {
+    top: -43vh;
+    right: -10vw;    
+    transform: rotate(185deg);
+    z-index: 11;
+  }
+
+  .my-frame-left {
+    left: -33vw;
+    transform: rotate(80deg);
+    z-index: 12;
+  }

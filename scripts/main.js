@@ -309,3 +309,31 @@ Hooks.on("dnd5e.preRollDamage", async (context, rollConfig) => {
    
    return true;
 });
+
+Hooks.on('renderImagePopout', (app, html, data) => {
+	
+	if( !game.user.isGM ) {
+      
+      for (const tag of ['img', 'video'])
+      {
+         let originalImg = html.find(tag);
+      
+         if (originalImg.length > 0) {
+            // Dupliquer l'élément img
+            let clonedImg = originalImg.clone();
+            let cloned2Img = originalImg.clone();
+            
+            // Modifier les classes de l'image originale
+            originalImg.attr("class", "my-frame my-frame-bottom");
+            
+            // Ajouter les classes à l'image clonée
+            clonedImg.attr("class", "my-frame my-frame-top");
+            cloned2Img.attr("class", "my-frame my-frame-left");
+            
+            // Insérer l'image clonée dans le DOM, par exemple, après l'original
+            originalImg.after(cloned2Img);
+            originalImg.after(clonedImg);
+         }
+      }
+   }		
+});

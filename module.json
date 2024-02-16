@@ -9,10 +9,13 @@
       "flags": {}
     }
   ],
-  "version": "1.0.0",  
+  "version": "1.1.0",  
   "socket": false,
   "esmodules": [
     "scripts/main.js"
+  ],
+  "styles": [
+    "juls-dnd-tools.css"
   ],
   "languages": [
     {
@@ -25,7 +28,7 @@
   "url": "https://github.com/julbdx/juls-dnd-tools",
   "bugs": "https://github.com/julbdx/juls-dnd-tools/issues",
   "changelog": "https://raw.githubusercontent.com/julbdx/juls-dnd-tools/main/module.json",
-  "download": "https://github.com/julbdx/juls-dnd-tools/releases/download/1.0.0/juls-dnd-tools.zip",
+  "download": "https://github.com/julbdx/juls-dnd-tools/releases/download/1.1.0/juls-dnd-tools.zip",
   "manifest": "https://raw.githubusercontent.com/julbdx/juls-dnd-tools/main/module.json",
   "readme": "https://raw.githubusercontent.com/julbdx/juls-dnd-tools/main/README.md",
   "id": "juls-dnd-tools",
