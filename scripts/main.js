@@ -1,6 +1,23 @@
 import constants from "../Constants.js";
 import { registerSettings } from "./settings.js";
 
+const socketName = 'module.juls-dnd-tools';
+
+const julsCloseImagePopout = () => {
+   const imagePopout = document.querySelector(".image-popout a.close");
+   if (imagePopout) {
+      imagePopout.click();
+      return;
+   }
+
+   const journalPopout = document.querySelector(".journal-sheet a.close");
+   if (journalPopout) {
+      journalPopout.click();
+      return;
+   }
+};
+
+
 /**
  * Renvoi vrai si l'acteur a accès au positionnement de 
  * dés manuels
@@ -284,6 +301,21 @@ Hooks.once("ready", () => {
    CONFIG.Dice.rolls.push(CustomJulDamageRoll);
 
    console.info('Dice replaced !');
+
+   if (game.user.isGM === true) {
+      document.addEventListener("keypress", (e) => {
+         if (
+            e.key == '²' &&
+            e.target.tagName.toUpperCase() != "INPUT" &&
+            e.target.tagName.toUpperCase() != "TEXTAREA"
+         ) {            
+            game.socket.emit(socketName);
+         }
+      });
+   }
+   
+   game.socket.on(socketName, julsCloseImagePopout);
+
 });
 
 Hooks.on("dnd5e.preRollAttack", async (context, rollConfig) => {
@@ -310,8 +342,45 @@ Hooks.on("dnd5e.preRollDamage", async (context, rollConfig) => {
    return true;
 });
 
+function addLinksToImages(images) {
+   images.each(function() {
+       const imgSrc = $(this).attr('src');
+       
+       // Vérifier si le lien a déjà été ajouté pour éviter les doublons
+       if ($(this).next('a').length === 0) {
+           const link = $('<a class="jul-share-image">Afficher aux joueurs</a>');
+           $(this).after(link);
+           
+           link.on('click', function(e) {
+               e.preventDefault();
+
+               let imgPopout = new ImagePopout(imgSrc, {
+                  title: "Shared Image",
+                  shareable: true,
+              });
+              imgPopout.shareImage();
+           });
+       }
+   });
+}
+
+Hooks.on('renderJournalSheet', (app, html) => {
+   if( game.user.isGM ) {      
+      const observer = new MutationObserver((mutations) => {
+         mutations.forEach((mutation) => {
+             if (mutation.type === 'childList') {
+                 const images = $(mutation.target).find('img');
+                 addLinksToImages(images);
+             }
+         });
+     });
+ 
+     const config = { childList: true, subtree: true };
+     observer.observe(html[0], config);
+   }
+});
+
 Hooks.on('renderImagePopout', (app, html, data) => {
-	
 	if( !game.user.isGM ) {
       
       for (const tag of ['img', 'video'])
@@ -335,5 +404,5 @@ Hooks.on('renderImagePopout', (app, html, data) => {
             originalImg.after(clonedImg);
          }
       }
-   }		
+   }
 });

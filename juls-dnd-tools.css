@@ -18,6 +18,42 @@
 
   .my-frame-left {
     left: -33vw;
-    transform: rotate(80deg);
+    transform: rotate(85deg);
     z-index: 12;
+  }
+
+  .jul-share-image {
+    color: green;
+    padding: 0.5ex 0;
+  }
+
+  .journal-entry-pages .wa-link, 
+  .journal-entry-pages .content-link,
+  .journal-entry-pages .passive-check {
+	background-color: inherit !important;
+	color: green;
+	border: none;
+  }
+
+  .journal-entry-pages blockquote {
+	margin: 2ex 2em;
+    padding: 2ex 2em;
+    font-size: 110%;
+	border-right: none;
+	border-left: none;
+    border-top: 1px solid green;
+    border-bottom: 1px solid green;
+    background: #0077000f;
+  }
+
+  .award-block [data-action="awardRequest"] {
+	margin: 0 0.5ex;
+  }
+
+  .sheet.journal-entry.dnd5e2-journal .journal-page-content .roll-link {
+	color: green;
+  }
+
+  .sheet.journal-entry.dnd5e2-journal .journal-page-content .roll-link a > i {
+	color: green !important;
   }
