@@ -1,6 +1,7 @@
 import constants from "../Constants.js";
 import { registerSettings } from "./settings.js";
 
+<<<<<<< HEAD
 /*
 Midi QOL :
 utils.js
@@ -9,6 +10,8 @@ export function playerForActor(actor) {
    ...
 */
 
+=======
+>>>>>>> 93d93dda34315f4d030f8b1b97e6ec3605180025
 const socketName = 'module.juls-dnd-tools';
 
 const julsCloseImagePopout = () => {
@@ -18,6 +21,7 @@ const julsCloseImagePopout = () => {
       return;
    }
 
+<<<<<<< HEAD
    // Trouver toutes les fenêtres popout ouvertes
    const openPopouts = Object.values(ui.windows).filter(w => w instanceof ImagePopout);
 
@@ -26,6 +30,8 @@ const julsCloseImagePopout = () => {
       popout.close(); // Ferme la fenêtre popout
    });
 
+=======
+>>>>>>> 93d93dda34315f4d030f8b1b97e6ec3605180025
    const journalPopout = document.querySelector(".journal-sheet a.close");
    if (journalPopout) {
       journalPopout.click();
@@ -333,6 +339,21 @@ Hooks.once("init", () => {
 
    console.log(CONFIG.Dice);
    console.info('Dice replaced !');
+
+   if (game.user.isGM === true) {
+      document.addEventListener("keypress", (e) => {
+         if (
+            e.key == '²' &&
+            e.target.tagName.toUpperCase() != "INPUT" &&
+            e.target.tagName.toUpperCase() != "TEXTAREA"
+         ) {            
+            game.socket.emit(socketName);
+         }
+      });
+   }
+   
+   game.socket.on(socketName, julsCloseImagePopout);
+
 });
 
 Hooks.once("ready", () => {
@@ -386,6 +407,7 @@ Hooks.on("dnd5e.preRollDamage", async (context, rollConfig) => {
 
 function addLinksToImages(images) {
    images.each(function() {
+<<<<<<< HEAD
        const imgObj = $(this);
        const imgSrc = imgObj.attr('src');       
        
@@ -425,6 +447,25 @@ function addLinksToImages(images) {
             }, startTimer);
         });
        }       
+=======
+       const imgSrc = $(this).attr('src');
+       
+       // Vérifier si le lien a déjà été ajouté pour éviter les doublons
+       if ($(this).next('a').length === 0) {
+           const link = $('<a class="jul-share-image">Afficher aux joueurs</a>');
+           $(this).after(link);
+           
+           link.on('click', function(e) {
+               e.preventDefault();
+
+               let imgPopout = new ImagePopout(imgSrc, {
+                  title: "Shared Image",
+                  shareable: true,
+              });
+              imgPopout.shareImage();
+           });
+       }
+>>>>>>> 93d93dda34315f4d030f8b1b97e6ec3605180025
    });
 }
 
@@ -434,7 +475,11 @@ Hooks.on('renderJournalSheet', (app, html) => {
          mutations.forEach((mutation) => {
              if (mutation.type === 'childList') {
                  const images = $(mutation.target).find('img');
+<<<<<<< HEAD
                  addLinksToImages(images);                 
+=======
+                 addLinksToImages(images);
+>>>>>>> 93d93dda34315f4d030f8b1b97e6ec3605180025
              }
          });
      });
@@ -518,6 +563,7 @@ Hooks.on('renderImagePopout', async (app, html, data) => {
             </div>`;
          });
       }
+<<<<<<< HEAD
       else
       {
          frames.forEach(frame => {         
@@ -584,5 +630,7 @@ Hooks.on('renderImagePopout', async (app, html, data) => {
                
          }, 8000); // Delay to match the appearance of the text
       }, startTimer); // Delay to match the appearance of the text
+=======
+>>>>>>> 93d93dda34315f4d030f8b1b97e6ec3605180025
    }
 });
