@@ -1,6 +1,39 @@
 import constants from "../Constants.js";
 import { registerSettings } from "./settings.js";
 
+/*
+Midi QOL :
+utils.js
+export function playerForActor(actor) {
+	return game.users?.activeGM;
+   ...
+*/
+
+const socketName = 'module.juls-dnd-tools';
+
+const julsCloseImagePopout = () => {
+   const imagePopout = document.querySelector(".image-popout a.close");
+   if (imagePopout) {
+      imagePopout.click();
+      return;
+   }
+
+   // Trouver toutes les fenêtres popout ouvertes
+   const openPopouts = Object.values(ui.windows).filter(w => w instanceof ImagePopout);
+
+   // Fermer toutes les fenêtres popout sauf la dernière ouverte
+   openPopouts.forEach(popout => {
+      popout.close(); // Ferme la fenêtre popout
+   });
+
+   const journalPopout = document.querySelector(".journal-sheet a.close");
+   if (journalPopout) {
+      journalPopout.click();
+      return;
+   }
+};
+
+
 /**
  * Renvoi vrai si l'acteur a accès au positionnement de 
  * dés manuels
@@ -13,7 +46,7 @@ function isTrustedManualRollForActor(actor)
    return false;
 }
 
-Hooks.once("ready", () => {
+Hooks.once("init", () => {
 
    class CustomJulD20Roll extends CONFIG.Dice.D20Roll {
       constructor(formula, data, options) {
@@ -37,7 +70,7 @@ Hooks.once("ready", () => {
          let targets = Array.from(game.user.targets);
          let targetDetails = targets.map(target => {
             let name = target.name;
-            let ac = target.actor.data.data.attributes.ac.value; // Cela dépend de votre système de jeu
+            let ac = target.actor.system.attributes.ac.value; // Cela dépend de votre système de jeu
             return `<li>${name} — CA: ${ac}</li>`;
          });
 
@@ -181,14 +214,21 @@ Hooks.once("ready", () => {
          return new Promise((resolve, reject) => {
 
             const title = rolls[0].options?.flavor ?? rolls[0].title;
-            const damageTypes = CONFIG.DND5E.damageTypes;
+            let damageTypes = CONFIG.DND5E.damageTypes;   
+            
+            damageTypes['healing'] = {
+               label: 'Soins',
+               icon: 'systems/dnd5e/icons/svg/hit-points.svg',               
+               reference: '',
+            };
+            //damageTypes['healing'] = 'Soins';
 
             // Crée les champs de saisie pour chaque type de dégât            
-            let damageOtherInputs = Object.entries(damageTypes).map(([key, label]) => {
+            let damageOtherInputs = Object.entries(damageTypes).map(([key, damageObject]) => {
                if (!rolls.find(r => r.options.type === key))
                {
                  return `<div class="form-group">
-                     <label>${label} :</label>
+                     <label>${damageObject.label} :</label>
                      <input type="text" name="${key}" value="">
                   </div>`;
                }
@@ -198,10 +238,15 @@ Hooks.once("ready", () => {
             const damageInputs = rolls.map((roll) => {
                // Ajoute une classe spéciale pour les dégâts de force
                let extraClass = (idx++) <= 0 ? "focus-damage" : "";               
-               return `<div class="form-group">
-                     <label>${damageTypes[roll.options.type]} (${roll.formula}) :</label>
+               if (roll.options.type)
+               {
+                 return `<div class="form-group">
+                     <label>${damageTypes[roll.options.type].label} (${roll.formula}) :</label>
                      <input type="text" name="${roll.options.type}" class="${extraClass}" value="">
                   </div>`;
+               }
+               else
+                 return '';
             }).join("");
 
             // Affiche la boîte de dialogue
@@ -233,7 +278,11 @@ Hooks.once("ready", () => {
                                });                               
                                results.push(roll);
                              }                                
-                           }                           
+                           }
+
+                           if (results.length == 0)
+                              rolls.forEach(r => results.push(r));                              
+
                            resolve(results);
                      }
                   },
@@ -277,13 +326,38 @@ Hooks.once("ready", () => {
    }
 
    CONFIG.Dice.OriginalDamageRoll = CONFIG.Dice.DamageRoll;
-
    CONFIG.Dice.D20Roll = CustomJulD20Roll;
    CONFIG.Dice.rolls.push(CustomJulD20Roll);
    CONFIG.Dice.DamageRoll = CustomJulDamageRoll;
    CONFIG.Dice.rolls.push(CustomJulDamageRoll);
 
+   console.log(CONFIG.Dice);
    console.info('Dice replaced !');
+});
+
+Hooks.once("ready", () => {
+
+   if (game.user.isGM === true) {
+      document.addEventListener("keypress", (e) => {
+         if (
+            e.key == '²' &&
+            e.target.tagName.toUpperCase() != "INPUT" &&
+            e.target.tagName.toUpperCase() != "TEXTAREA"
+         ) {            
+            game.socket.emit(socketName);
+         }
+      });
+   }
+   
+   game.socket.on(socketName, (data) => { 
+      switch (data ?? 'close')
+      {
+         case 'close':
+            julsCloseImagePopout();
+            break;
+      }
+   });
+
 });
 
 Hooks.on("dnd5e.preRollAttack", async (context, rollConfig) => {
@@ -310,30 +384,205 @@ Hooks.on("dnd5e.preRollDamage", async (context, rollConfig) => {
    return true;
 });
 
-Hooks.on('renderImagePopout', (app, html, data) => {
-	
-	if( !game.user.isGM ) {
+function addLinksToImages(images) {
+   images.each(function() {
+       const imgObj = $(this);
+       const imgSrc = imgObj.attr('src');       
+       
+       // Vérifie si l'attribut "data-show-player" existe
+      if (!imgObj.attr('data-show-player')) {
+         // Si l'attribut n'existe pas, le définir à 1
+         imgObj.attr('data-show-player', '1');
+         
+         imgObj.on('contextmenu', function(e) {
+            e.preventDefault();
+
+            let startTimer = 500;
+            
+            let music = '';
+            let parts = imgObj.attr("alt")?.split(";") ?? [];
+            if (parts.length > 3)
+               music = parts[3].trim();               
+
+            // Envoi la musique
+            if (music)
+            {
+               let playlist = game.playlists.getName("Thèmes");
+               if (playlist) {
+                  // Rechercher la première piste dont le nom commence par la valeur de music
+                  let track = playlist.sounds.find(sound => sound.name.startsWith(music));
+                  if (track)         
+                     playlist.playSound(track);                     
+               }
+            }
+
+            setTimeout(() => {
+               let imgPopout = new ImagePopout(imgSrc, {
+                  title: imgObj.attr("alt") ?? null,                  
+                  shareable: true,
+              });
+              imgPopout.shareImage();
+            }, startTimer);
+        });
+       }       
+   });
+}
+
+Hooks.on('renderJournalSheet', (app, html) => {
+   if( game.user.isGM ) {      
+      const observer = new MutationObserver((mutations) => {
+         mutations.forEach((mutation) => {
+             if (mutation.type === 'childList') {
+                 const images = $(mutation.target).find('img');
+                 addLinksToImages(images);                 
+             }
+         });
+     });
+ 
+     const config = { childList: true, subtree: true };
+     observer.observe(html[0], config);
+   }
+});
+
+// Obtenir l'orientation de l'image
+async function getImageOrientation(sourceUrl) {
+   return new Promise((resolve, reject) => {
+       const img = new Image();
+
+       img.onload = function() {
+           const width = img.width;
+           const height = img.height;
+
+           let orientation;
+           if (width > height) {
+               orientation = 'landscape';  // Paysage
+           } else
+               orientation = 'portrait';   // Portrait
+
+           resolve(orientation);
+       };
+
+       img.onerror = function() {
+           reject(new Error('Image could not be loaded.'));
+       };
+
+       img.src = sourceUrl;
+   });
+}
+
+Hooks.on('renderImagePopout', async (app, html, data) => {
+
+   if( !game.user.isGM ) {
       
-      for (const tag of ['img', 'video'])
-      {
-         let originalImg = html.find(tag);
-      
-         if (originalImg.length > 0) {
-            // Dupliquer l'élément img
-            let clonedImg = originalImg.clone();
-            let cloned2Img = originalImg.clone();
-            
-            // Modifier les classes de l'image originale
-            originalImg.attr("class", "my-frame my-frame-bottom");
-            
-            // Ajouter les classes à l'image clonée
-            clonedImg.attr("class", "my-frame my-frame-top");
-            cloned2Img.attr("class", "my-frame my-frame-left");
-            
-            // Insérer l'image clonée dans le DOM, par exemple, après l'original
-            originalImg.after(cloned2Img);
-            originalImg.after(clonedImg);
+      // Trouver toutes les fenêtres popout ouvertes
+      const openPopouts = Object.values(ui.windows).filter(w => w instanceof ImagePopout);
+
+      // Fermer toutes les fenêtres popout sauf la dernière ouverte
+      openPopouts.forEach(popout => {
+         if (popout !== app) { // Vérifie si ce n'est pas la fenêtre courante
+            popout.close(); // Ferme la fenêtre popout
          }
+      });
+
+      let render = '<div class="window-content dtjul-photo-window">';
+      
+      // Tableau contenant les textes
+      const frames = ["top", "bottom", "side"];
+
+      let orientation = await getImageOrientation(data.image);
+
+      let startTimer = 1000;
+      let title = '';
+      let subtitle = '';
+
+      let parts = data.title?.split(";") ?? [];
+      if (parts.length > 1)
+      {         
+         title = parts[1].trim();
+         if (parts.length > 2)
+         {
+            subtitle = '— ' + parts[1].trim() + ' —';
+            title = parts[2].trim();
+
+            if (parts.length > 4)
+               startTimer = parts[4].trim() * 1000;
+         }         
+      }      
+
+      // Boucle forEach pour ajouter chaque texte à la variable render
+      if (!title && !subtitle)
+      {
+         frames.forEach(frame => {         
+            render += `<div class="dtjul-photo-box ${frame} ${orientation}">
+               <img src="${data.image}" alt="Image" class="image">
+            </div>`;
+         });
       }
-   }		
+      else
+      {
+         frames.forEach(frame => {         
+            render += `<div class="dtjul-photo-box ${frame} ${orientation}">
+               <img src="${data.image}" alt="Image" class="image">
+               <div class="content">
+                  <img src="/modules/juls-dnd-tools/assets/trait2.png" alt="Trait Séparateur" class="dtjul-separator">
+                  <h1 class="dtjul-subtitle">${subtitle}</h1>
+                  <h2 class="dtjul-title">${title}</h2>
+                  <img src="/modules/juls-dnd-tools/assets/trait2.png" alt="Trait Séparateur" class="dtjul-separator">
+               </div>        
+            </div>`;
+         });
+      }
+   
+      render += "</div>";
+
+      html.html(render);
+
+      // Once the box has fully appeared, reveal the text and separator
+      setTimeout(() => {
+         const titles = document.querySelectorAll('.dtjul-title');
+         const subtitles = document.querySelectorAll('.dtjul-subtitle');
+         const separators = document.querySelectorAll('.dtjul-separator');
+   
+         separators.forEach(separator => {
+               separator.style.opacity = '1';
+               separator.style.transform = 'scaleX(1)';    
+         });
+
+         setTimeout(() => {
+               subtitles.forEach(title => {
+                  title.style.opacity = '1';
+                  title.style.transform = 'scale(1)';    
+               });
+         }, 500); // Delay to match the appearance of the text
+
+         setTimeout(() => {
+               titles.forEach(title => {
+                  title.style.opacity = '1';
+                  title.style.transform = 'scale(1)';    
+               });
+         }, 1500); // Delay to match the appearance of the text
+
+         setTimeout(() => {
+               setTimeout(() => {
+                  separators.forEach(separator => {
+                     separator.style.opacity = '0';
+                     separator.style.transform = 'scaleX(0)';    
+                  });
+               }, 2000); // Delay to match the appearance of the text
+
+               setTimeout(() => {
+                  subtitles.forEach(title => {
+                     title.style.opacity = '0';                
+                  });
+               }, 1500); // Delay to match the appearance of the text
+
+               setTimeout(() => {
+                  titles.forEach(title => {
+                     title.style.opacity = '0';                
+                  });
+               }, 1000); // Delay to match the appearance of the text
+               
+         }, 8000); // Delay to match the appearance of the text
+      }, startTimer); // Delay to match the appearance of the text
+   }
 });

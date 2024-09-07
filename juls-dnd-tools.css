@@ -1,23 +1,201 @@
-  .my-frame {
+  /*
+  .journal-entry-pages .wa-link, 
+  .journal-entry-pages .content-link,
+  .journal-entry-pages .passive-check {
+	  background-color: inherit !important;
+	  color: green;
+	  border: none;
+  }
+
+  .journal-entry-pages blockquote {
+	  margin: 2ex 2em;
+    padding: 2ex 2em;
+    font-size: 110%;
+	  border-right: none;
+	  border-left: none;
+    border-top: 1px solid green;
+    border-bottom: 1px solid green;
+    background: #0077000f;
+  }
+
+  .award-block [data-action="awardRequest"] {
+	  margin: 0 0.5ex;
+  }
+
+  .sheet.journal-entry.dnd5e2-journal .journal-page-content .roll-link {
+	  color: green;
+  }
+
+  .sheet.journal-entry.dnd5e2-journal .journal-page-content .roll-link a > i {
+	  color: green !important;
+  }
+    */
+
+#combat-dock #combatants {
+overflow: hidden !important;
+}
+
+  .hide-ui #combat-dock {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 100vh;
+    margin-top: 100vh;
+    transform: rotate(90deg);
+    transform-origin: top right;
+    overflow: hidden;
+  }
+  
+  .hide-ui #combat-dock2 {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vh;
+    margin-top: 100vh;
+    transform: rotate(270deg);
+    transform-origin: top left;
+    overflow: hidden;
+  }
+  
+  .dtjul-photo-window {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+  }
+
+
+  .dtjul-photo-box {
     position: absolute;    
-    border: 8px solid white !important;
+    
+    /*width: 30vw;*/
+
+    border: 16px solid white;
+    opacity: 0;
+    animation: dtjulfadeIn 2s forwards;
+
+    box-shadow: 10px 10px 30px rgba(0, 0, 0, 0.5); /* Ombre sous la photo-box */
+  }
+  
+  .dtjul-photo-box.side.landscape {
+    left: 23%;
+    top: 50%; 
+    transform: translate(-50%, -50%) rotate(91deg);
+
+    width: 100vh;
+    height: 56.25vh; /* Hauteur fixe */
+  }
+  
+  .dtjul-photo-box.bottom.landscape {
+    left: 69%;
+    top: 75%; 
+    transform: translate(-50%, -50%) rotate(2deg);
+
+    width: 90vh;
+    height: 50vh; /* Hauteur fixe */
+  }
+  
+  .dtjul-photo-box.top.landscape {
+    left: 70%;
+    top: 25%; 
+    transform: translate(-50%, -50%) rotate(177deg);
+
+    width: 90vh;
+    height: 50vh; /* Hauteur fixe */
   }
 
-  .my-frame-bottom {
-    bottom: -33vh;
-    right: -10vw;
-    z-index: 10;
+  .dtjul-photo-box.side.portrait {
+    left: 18%;
+    top: 60%; 
+    transform: translate(-50%, -50%) rotate(91deg);
+    width: 30vw;
+    height: 37vw; /* Hauteur fixe */
   }
+  
+  .dtjul-photo-box.bottom.portrait {
+    left: 80%;
+    top: 60%; 
+    transform: translate(-50%, -50%) rotate(2deg);
 
-  .my-frame-top {
-    top: -43vh;
-    right: -10vw;    
-    transform: rotate(185deg);
-    z-index: 11;
+    width: 33vw;
+    height: 41.25vw; /* Hauteur fixe */
   }
+  
+  .dtjul-photo-box.top.portrait {
+    left: 50%;
+    top: 40%; 
+    transform: translate(-50%, -50%) rotate(177deg);
 
-  .my-frame-left {
-    left: -33vw;
-    transform: rotate(80deg);
-    z-index: 12;
+    width: 33vw;
+    height: 41.25vw; /* Hauteur fixe */
   }
+    
+  .dtjul-photo-box .image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border: 0;
+  }
+  
+  .dtjul-photo-box .content {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;    
+  }
+  
+  .dtjul-photo-box .content h1, .dtjul-photo-box .content h2 {
+      margin: 0;
+      padding: 0;
+      /*font-family: Arial, sans-serif;*/
+      color: white;
+      text-align: center;
+  
+      opacity: 0;
+      transition: opacity 2.5s;
+      text-shadow: -1px -1px 0 #000000c5, 1px -1px 0 #000000c5, -1px 1px 0 #000000c5, 1px 1px 0 #000000c5;
+  }
+  
+  .dtjul-photo-box .content h1 {
+      font-size: 1.1vw;
+      font-weight: bold;
+      font-variant: small-caps;
+      letter-spacing: 2px;
+  }
+  
+  .dtjul-photo-box .content h2 {
+      font-size: 1.5vw;
+      margin-bottom: 4px;
+      font-family: 'Pythia', serif;
+      border: 0;
+  }
+  
+  .dtjul-subtitle {
+      display: block;
+      font-size: 70%;
+      font-variant: small-caps;
+  }
+  
+  .dtjul-separator {
+      width: 75%;
+      /*max-width: 200px;    */
+      opacity: 0;
+      transform: scaleX(0);
+      transform-origin: center;
+      transition: opacity 0.5s, transform 1s;
+      border: 0;
+  }
+  
+  @keyframes dtjulfadeIn {
+      to {
+          opacity: 1;
+      }
+  }
+    

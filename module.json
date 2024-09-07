@@ -9,8 +9,8 @@
       "flags": {}
     }
   ],
-  "version": "1.1.0",  
-  "socket": false,
+  "version": "1.1.0",
+  "socket": true,
   "esmodules": [
     "scripts/main.js"
   ],
@@ -34,20 +34,20 @@
   "id": "juls-dnd-tools",
   "compatibility": {
     "minimum": "10",
-    "verified": "11.315",
-    "maximum": "11"
+    "verified": "12.327",
+    "maximum": "12"
   },
   "relationships": {
-      "systems": [
-          {
-              "id": "dnd5e",
-              "type": "system",
-              "compatibility": {
-                  "minimum": "3",
-                  "verified": "3.0.0",
-                  "maximum": "4"
-              }
-          }
-      ]      
+    "systems": [
+      {
+        "id": "dnd5e",
+        "type": "system",
+        "compatibility": {
+          "minimum": "3",
+          "verified": "3.0.0",
+          "maximum": "4"
+        }
+      }
+    ]
   }
 }
