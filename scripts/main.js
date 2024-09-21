@@ -146,7 +146,22 @@ Hooks.once("init", () => {
          *                                          dialog was closed
          */
       async configureDialog(obj={}, options={}) {
-         if (isTrustedManualRollForActor(await fromUuid(this.data.actorUuid)))
+         let actor = null;
+
+         if (this.data.actorUuid)
+            actor = await fromUuid(this.data.actorUuid);
+
+         if (!actor && this.data.item && this.data.item.activities)
+         {
+            const activity = this.data.item.activities.values().next().value;
+            if (activity)
+               actor = activity.actor;
+         }
+
+         // Toujours pas ? Recherche par nom !
+         actor = game.actors.getName(this.data.name);
+         
+         if (isTrustedManualRollForActor(actor))
          {            
             const r = await this.manualRollDialog(obj['title']);
 
@@ -306,7 +321,16 @@ Hooks.once("init", () => {
 
       static async configureDialog(rolls, {
          title, defaultRollMode, defaultCritical=false, template, allowCritical=true}={}, options={}) {            
-            if (isTrustedManualRollForActor(await fromUuid(rolls[0].data.actorUuid)))
+            
+            let actor = null;            
+            const activity = rolls[0].data.item.activities.values().next().value;
+            if (activity)
+               actor = activity.actor;
+
+            if (!actor)
+               actor = await fromUuid(rolls[0].data.actorUuid)
+
+            if (isTrustedManualRollForActor(actor))
             {
                const results = await CustomJulDamageRoll.manualDamageDialog(rolls);
                
@@ -331,7 +355,6 @@ Hooks.once("init", () => {
    CONFIG.Dice.DamageRoll = CustomJulDamageRoll;
    CONFIG.Dice.rolls.push(CustomJulDamageRoll);
 
-   console.log(CONFIG.Dice);
    console.info('Dice replaced !');
 });
 
@@ -360,9 +383,13 @@ Hooks.once("ready", () => {
 
 });
 
-Hooks.on("dnd5e.preRollAttack", async (context, rollConfig) => {
+Hooks.on("dnd5e.preRollAttackV2", (context, rollConfig) => {
    
-   if (isTrustedManualRollForActor(rollConfig['actor']))
+   let actor = rollConfig['actor'];
+   if (!actor)
+      actor = context.subject.actor;
+
+   if (isTrustedManualRollForActor(actor))
    {
       // On désactive le fastforward pour permettre de saisir les valeurs
       // des dégâts !
@@ -372,9 +399,13 @@ Hooks.on("dnd5e.preRollAttack", async (context, rollConfig) => {
    return true;
 });
 
-Hooks.on("dnd5e.preRollDamage", async (context, rollConfig) => {
+Hooks.on("dnd5e.preRollDamageV2", (context, rollConfig) => {
 
-   if (isTrustedManualRollForActor(rollConfig['actor']))
+   let actor = rollConfig['actor'];
+   if (!actor)
+      actor = context.subject.actor;
+
+   if (isTrustedManualRollForActor(actor))
    {
       // On désactive le fastforward pour permettre de saisir les valeurs
       // des dégâts !

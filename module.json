@@ -33,8 +33,8 @@
   "readme": "https://raw.githubusercontent.com/julbdx/juls-dnd-tools/main/README.md",
   "id": "juls-dnd-tools",
   "compatibility": {
-    "minimum": "10",
-    "verified": "12.327",
+    "minimum": "12",
+    "verified": "12.331",
     "maximum": "12"
   },
   "relationships": {
@@ -45,7 +45,7 @@
         "compatibility": {
           "minimum": "3",
           "verified": "3.0.0",
-          "maximum": "4"
+          "maximum": "4.1.0.0"
         }
       }
     ]
