@@ -12,6 +12,7 @@
   "version": "1.1.0",
   "socket": true,
   "esmodules": [
+    "scripts/quick-attack-app.js",
     "scripts/main.js"
   ],
   "styles": [

@@ -1,5 +1,6 @@
 import constants from "../Constants.js";
 import { registerSettings } from "./settings.js";
+import { QuickAttackApp } from './quick-attack-app.js';
 
 /*
 Midi QOL :
@@ -381,6 +382,9 @@ Hooks.once("ready", () => {
       }
    });
 
+   // Publication de fonction pour les macros
+   game.modules.get("juls-dnd-tools").julQuickAttack = julQuickAttack;
+
 });
 
 Hooks.on("dnd5e.preRollAttackV2", (context, rollConfig) => {
@@ -617,3 +621,44 @@ Hooks.on('renderImagePopout', async (app, html, data) => {
       }, startTimer); // Delay to match the appearance of the text
    }
 });
+
+/**
+ * Fonction pour macro qui déclenche une attaque rapide
+ * 
+ */
+async function julQuickAttack(attackerToken, targetToken)
+{
+   // Si pas d'acteur, alors on prend l'acteur dont c'est le tour de combat
+   if (!attackerToken)
+      attackerToken = game.combat?.combatant?.token;
+
+   // Si toujours pas d'acteur, on prend le premier acteur sélectionné
+   if (!attackerToken)
+      attackerToken = canvas.tokens.controlled[0]?.token;
+
+   // Si toujours pas d'acteur, on arrête avec un message d'erreur
+   if (!attackerToken)
+   {
+      ui.notifications.error("Aucun attaquant n'est sélectionné !");
+      return;
+   }
+
+   // Détermination de la cible
+   if (!targetToken)
+      targetToken = game.user.targets.values().next().value?.document;
+
+   // Si pas de cible, alors on prend le premier token contrôlé
+   if (!targetToken)
+      targetToken = canvas.tokens.controlled[0]?.document;
+   
+   // Si toujours pas de cible, on arrête avec un message d'erreur
+   if (!targetToken)
+   {
+      ui.notifications.error("Aucune cible n'est sélectionnée !");
+      return;
+   }
+
+   // Créer et afficher l'application
+   const app = new QuickAttackApp(attackerToken, targetToken);
+   app.render(true);  // Afficher l'application
+}

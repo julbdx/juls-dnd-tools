@@ -1,0 +1,67 @@
+<div>
+    <div class="document-name">Attaque rapide de {{attacker}} sur {{target}}</div>
+    <h2>Attaques</h2>
+    <!-- des radio de -5 à +5 -->
+    <input type="radio" name="bonus" value="-5" id="bonus-5">
+    <label for="bonus-5">-5</label>
+    <input type="radio" name="bonus" value="-4" id="bonus-4">
+    <label for="bonus-4">-4</label>
+    <input type="radio" name="bonus" value="-3" id="bonus-3">
+    <label for="bonus-3">-3</label>
+    <input type="radio" name="bonus" value="-2" id="bonus-2">
+    <label for="bonus-2">-2</label>
+    <input type="radio" name="bonus" value="-1" id="bonus-1">
+    <label for="bonus-1">-1</label>
+    <input type="radio" name="bonus" value="0" id="bonus0" checked>
+    <label for="bonus0">0</label>
+    <input type="radio" name="bonus" value="1" id="bonus1">
+    <label for="bonus1">+1</label>
+    <input type="radio" name="bonus" value="2" id="bonus2">
+    <label for="bonus2">+2</label>
+    <input type="radio" name="bonus" value="3" id="bonus3"> 
+    <label for="bonus3">+3</label>
+    <input type="radio" name="bonus" value="4" id="bonus4">
+    <label for="bonus4">+4</label>
+    <input type="radio" name="bonus" value="5" id="bonus5">
+    <label for="bonus5">+5</label>
+
+
+    <table>
+        {{#each attacks}}
+        <tr>
+            <td><img src="{{this.item.img}}" width="48" height="48" /></td>
+            <td>{{this.item.name}}</td>
+            <td>{{this.item.labels.range}}</td>
+            <td>+{{this.item.labels.modifier}}</td>
+            <td>
+                {{#each this.item.labels.damages}}
+                {{this.label}} <br>
+                {{/each}}
+            </td>
+            <td>
+                <div style="display: flex; flex-direction: row;">
+                    <button data-action="rollAction" data-mode="2d20kh" data-weapon="{{this.item.id}}">adv.</button>
+                    <button data-action="rollAction" data-mode="1d20" data-weapon="{{this.item.id}}">normal</button>
+                    <button data-action="rollAction" data-mode="2d20kl" data-weapon="{{this.item.id}}">dis.</button>
+                </div>
+            </td>
+        </tr>
+        {{/each}}
+    </table>
+    <h2>Résultats</h2>
+    <div id="attack-results">
+        {{#each attackResults}}
+        <div class="result {{#if this.active}}{{#if this.success}}success{{^}}failed{{/if}}{{^}}disabled{{/if}}">
+            <span class="total">{{this.roll.total}}</span>
+            <span class="dices">
+                {{#each this.rollResults}}
+                    {{this.result}} <br>
+                {{/each}}
+            </span>      
+            <span class="damage">{{this.totalDamage}}</span>      
+        </div>
+        {{/each}}
+    </div>    
+    <h2>Victime</h2>
+    <p>CA de la cible : {{targetAC}}</p>
+</div>
