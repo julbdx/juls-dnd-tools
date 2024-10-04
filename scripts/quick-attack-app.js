@@ -23,6 +23,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
             applyDamageAction: QuickAttackApp.applyDamage,
             changeACAction: QuickAttackApp.changeAC,
             changeDamageAction: QuickAttackApp.changeDamage,
+            changeBonusAction: QuickAttackApp.changeBonus,
         }
     };
 
@@ -49,6 +50,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.attacks = [];
         this.damages = [];
         this.concentrationChecks = [];
+        this.bonus = 0;
 
         // CA de la cible par défaut
         this.targetAC = this.targetToken.actor.system.attributes.ac.value ?? 10;
@@ -88,6 +90,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
         context.attacks = this.attacks;
         context.attackResults = this.attackResults;
         context.damages = this.damages;
+        context.bonus = this.bonus;
         let totalDamage = 0;
         this.damages.forEach(d => {
             totalDamage += d.take;
@@ -164,7 +167,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 this.attackResults[i].success = true;    // réussite critique
             }
             else
-                this.attackResults[i].success = this.attackResults[i].roll.roll.total >= this.targetAC;
+                this.attackResults[i].success = (this.attackResults[i].roll.roll.total + this.bonus) >= this.targetAC;
 
 
             this.attackResults[i].critic = critic;
@@ -226,6 +229,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                             active: this.damages.find(dd => dd.id == d.id) ? this.damages.find(dd => dd.id == d.id).active : true,
                             total: 0,
                             take: 0,
+                            nb: 0,
                         };
 
                     // Calcul des dommages réels
@@ -239,9 +243,9 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                     
                     if (damages[d.id].active)
                     {
+                        let computedRealDmg = 0;
                         realDmg.forEach(dmg => {
-                            concentrationDD += Math.ceil(dmg.value);
-                            damages[d.id].take += Math.ceil(dmg.value);
+                            computedRealDmg += dmg.value;                            
                             if (dmg.active.immunity)
                                 damages[d.id].reduced = 'immunity';
                             else if (dmg.active.resistance)
@@ -249,6 +253,14 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                             else if (dmg.active.vulnerability)
                                 damages[d.id].reduced = 'vulnerability';
                         });
+
+                        computedRealDmg = Math.ceil(computedRealDmg);
+                        if (computedRealDmg != 0)
+                        {
+                            concentrationDD += computedRealDmg;
+                            damages[d.id].nb++;
+                            damages[d.id].take += computedRealDmg;
+                        }
                     }
                     else
                     {
@@ -310,7 +322,22 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
         // recalcul
         await this.refresh();
-     }     
+     } 
+     
+     /**
+     * Change le bonus général
+     * 
+     * @param {*} event 
+     * @param {*} target 
+     */
+     static async changeBonus(event, target)
+     {
+        // On change le bonus
+        this.bonus += parseInt(target.dataset.mode);
+
+        // recalcul
+        await this.refresh();
+     }
 
     /**
      * Ajoute un dé à l'attaque
@@ -441,14 +468,42 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
      */
     static async applyDamage(event, target)
     {
+        // On fait un résumé des dégâts dans une chatcard diffusée par le jeton target :
+        // - une ligne par attaque qui a réussi avec le nom de l'arme et les dégâts infligés (type + résistance + dégâts pour chaque type de dégats)
+        // - une ligne par attaque râtée
+        // - et enfin une ligne pour chaque jet de concentration effectué, réussi ou raté
+        let chatContent = `<h2>Attaques subies</h2><ul>`;
+        for (let i = 0; i < this.damages.length; i++)
+        {
+            let d = this.damages[i];
+            chatContent += `<li>${d.nb}x <strong>${d.label}</strong> : `;
+            chatContent += `${d.take}`;
+            if (d.reduced)
+                chatContent += ` (<i class="fas fa-shield-alt"></i>${d.reduced})`;
+            chatContent += `</li>`;
+        }
+
+        // Affiche du nombre d'attaque râtée par weapon, de la forme "4x épée courte: râtée"
+        let failedAttacksByWeapon = {};
+        this.attackResults.filter(a => !a.success).forEach(a => {
+            if (!failedAttacksByWeapon[a.weapon.id])
+                failedAttacksByWeapon[a.weapon.id] = 0;
+            failedAttacksByWeapon[a.weapon.id]++;
+        }
+        );
+        for (let weaponId in failedAttacksByWeapon)
+        {
+            let weapon = this.attackerToken.actor.collections.items.get(weaponId);
+            chatContent += `<li>${failedAttacksByWeapon[weaponId]}x <strong>${weapon.name}</strong> : râtée</li>`;
+        }
+
         // On applique les dégâts à la cible
         this.damages.forEach(d => {
-            console.log(d.properties);
             this.targetToken.actor.applyDamage( [ {
                 value: d.take, 
                 //type: d.type,
                 //properties: d.properties, 
-            } ]);
+            } ]);            
         });
 
         // Si après, la cible est morte (pv <= 0), on lui met l'état "mort" si ce n'est pas un PJ
@@ -483,6 +538,8 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 // on retire toutes les concentrations du token
                 let concentrationEffects = token.actor.effects.filter(eff => eff.name.toLowerCase().includes("concentrat"));
 
+                chatContent += `<li>✖ Concentration : ${c.source} : ${r.total}/${c.dd} : raté !</li>`;
+
                 for (let effect of concentrationEffects) {
                     await effect.delete();
                 }
@@ -490,10 +547,22 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 // Et c'est fini,
                 break;
             }
+            else
+            {
+                chatContent += `<li>✔ Concentration : ${c.source} : ${r.total}/${c.dd} : réussi !</li>`;
+            }
         }
-        
 
-        return;
+        chatContent += `</ul>`;
+        
+        // On envoie le message
+        let chatData = {
+            user: game.user._id,
+            speaker: ChatMessage.getSpeaker({ token: this.targetToken.document }),
+            content: chatContent,        
+        };
+        ChatMessage.create(chatData);      
+        
         // On avance l'initiative et on ferme la fenêtre
         const combat = game.combat;
         const current = combat.combatant;

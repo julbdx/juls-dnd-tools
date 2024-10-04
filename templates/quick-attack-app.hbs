@@ -4,29 +4,13 @@
         <div class="portrait">
             <img src="{{attacker.texture.src}}" width="48" height="48" />
         </div>
-        <div class="bonus">
-            <input type="radio" name="bonus" value="-5" id="bonus-5">
-            <label for="bonus-5">-5</label>
-            <input type="radio" name="bonus" value="-4" id="bonus-4">
-            <label for="bonus-4">-4</label>
-            <input type="radio" name="bonus" value="-3" id="bonus-3">
-            <label for="bonus-3">-3</label>
-            <input type="radio" name="bonus" value="-2" id="bonus-2">
-            <label for="bonus-2">-2</label>
-            <input type="radio" name="bonus" value="-1" id="bonus-1">
-            <label for="bonus-1">-1</label>
-            <input type="radio" name="bonus" value="0" id="bonus0" checked>
-            <label for="bonus0">0</label>
-            <input type="radio" name="bonus" value="1" id="bonus1">
-            <label for="bonus1">+1</label>
-            <input type="radio" name="bonus" value="2" id="bonus2">
-            <label for="bonus2">+2</label>
-            <input type="radio" name="bonus" value="3" id="bonus3"> 
-            <label for="bonus3">+3</label>
-            <input type="radio" name="bonus" value="4" id="bonus4">
-            <label for="bonus4">+4</label>
-            <input type="radio" name="bonus" value="5" id="bonus5">
-            <label for="bonus5">+5</label>
+        <div class="bonus header">
+            <button data-action="changeBonusAction" data-mode="-1">-</button>
+            <strong style="white-space: nowrap;">Modificateur : {{#if bonus}}{{bonus}}{{^}}aucun bonus{{/if}}</strong>
+            <button data-action="changeBonusAction" data-mode="1"">+</button>
+        </div>
+        <div>
+            {{bonus}}
         </div>
         <div class="portrait">
             <img src="{{target.document.texture.src}}" width="48" height="48" />
@@ -98,7 +82,7 @@
                 <tr class="{{#if this.active}}dmg{{^}}dtjul-disabled{{/if}}">
                     <td><img src="{{this.img}}" width="24" height="24" /></td>
                     <td>
-                        {{this.label}}
+                        {{this.nb}}x {{this.label}}
                         {{#if this.active}}
                             <a class="change" data-action="changeDamageAction" data-damage="{{this.id}}" data-mode="-1">(-)</a>
                         {{^}}
