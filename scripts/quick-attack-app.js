@@ -497,24 +497,29 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
             chatContent += `<li>${failedAttacksByWeapon[weaponId]}x <strong>${weapon.name}</strong> : râtée</li>`;
         }
 
-        // On applique les dégâts à la cible
+        // On applique les dégâts à la cible tous en même temps
+        let totalDamage = 0;
         this.damages.forEach(d => {
-            this.targetToken.actor.applyDamage( [ {
-                value: d.take, 
-                //type: d.type,
-                //properties: d.properties, 
-            } ]);            
+            totalDamage += d.take;
         });
+
+        await this.targetToken.actor.applyDamage( [ {
+            value: totalDamage, 
+            //type: d.type,
+            //properties: d.properties, 
+        } ]);
 
         // Si après, la cible est morte (pv <= 0), on lui met l'état "mort" si ce n'est pas un PJ
         let token = this.targetToken;
+        
         if (token.actor.system.attributes.hp.value <= 0)
         {       
             const proneEffect = CONFIG.statusEffects.find(e => e.id === "prone");
             const unconsciousEffect = CONFIG.statusEffects.find(e => e.id === "unconscious");
 
             await token.toggleEffect(proneEffect);
-            await token.toggleEffect(unconsciousEffect);     
+            await token.toggleEffect(unconsciousEffect);
+            
             if (!token.actor.hasPlayerOwner) {                
                 const deadEffect = CONFIG.statusEffects.find(e => e.id === "dead");                
                 await token.toggleEffect(deadEffect);
