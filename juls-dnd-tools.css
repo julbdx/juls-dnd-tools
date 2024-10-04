@@ -198,4 +198,137 @@ overflow: hidden !important;
           opacity: 1;
       }
   }
-    
+
+  .dtjul-window .window-header {
+    margin-block-end: 0 !important;
+  }
+  
+  .dtjul-dice-card {
+    width: 128px;
+    border-radius: 3px;
+    background: var(--dnd5e-background-5);
+    margin: 4px;
+    text-align: center;
+    border: 1px solid var(--color-border-light-2);
+    box-shadow: 0 0 2px #FFF inset;
+  }
+
+  .dtjul-dice-total {
+    font-family: var(--font-primary);
+    font-weight: 600;
+    margin-top: 0.25rem;
+    padding: 0.125rem;
+    font-size: var(--font-size-28);
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .dtjul-dice-total .dice-tooltip {
+    flex-grow: 0;
+  }
+
+  .dtjul-disabled {
+    opacity: 0.4;
+  }
+
+  .dtjul-attack-results {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .dtjul-attack-results .damage {
+    font-family: var(--font-primary);
+    font-weight: bold;;
+  }
+
+  .dtjul-attack-results .dice-rolls {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+  }
+
+  .dtjul-attack-results .dtjul-dice-card.failed {
+    background-color: #ff000013;
+  }
+
+  .dtjul-attack-results .dtjul-dice-card.success {
+    background-color: #00ff2611;
+  }
+
+  .dtjul-window .window-header .window-title {
+    font-size: var(--font-size-16) !important;
+    font-family: var(--dnd5e-font-modesto)!important;
+    font-weight: bold !important;
+    opacity: 0.7;
+    position: initial !important;    
+  }
+
+  /*
+  ".dtjul-quick-attack-app .results" est une grille de deux colonnes
+  la colonne attacks fait 55% de la largeur
+  et la colonne target fait le reste.
+  Utilisons la grid css pour arriver à nos fins
+  */
+  .dtjul-quick-attack-app .results {
+    display: grid;
+    grid-template-columns: 60% 1fr;
+    gap: 0.5rem;
+    width: 98%;
+  }
+  
+  .dtjul-quick-attack-app .header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .dtjul-quick-attack-app .weapon {
+    opacity: 0.7;
+    padding-top: 2px;
+  }
+
+  .dtjul-quick-attack-app .header img {
+    border-radius: 50%;
+  }
+
+  .dtjul-quick-attack-app .bonus {
+    flex-grow: 1;
+    text-align: center;
+  }
+
+  .dtjul-quick-attack-app .canceled {
+    opacity: 0.7;
+    /* stroke text */
+    text-decoration: line-through;
+    padding: 0 0.25rem;
+  }
+
+  .dtjul-quick-attack-app .canceled-motif {
+    opacity: 0.7;
+    font-style: italic;
+  }
+
+  .dtjul-quick-attack-app .target .value {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .dtjul-quick-attack-app .sum {
+    text-align: right;
+  }
+
+  .dtjul-quick-attack-app table th, .dtjul-quick-attack-app table td {
+    padding: 4px 4px !important;
+  }
+
+  .dtjul-quick-attack-app .change {
+    font-style: italic;
+    opacity: 0.6;
+    padding: 4px 0;
+  }

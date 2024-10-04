@@ -1,32 +1,39 @@
 <div>
-    <div class="document-name">Attaque rapide de {{attacker}} sur {{target}}</div>
-    <h2>Attaques</h2>
     <!-- des radio de -5 à +5 -->
-    <input type="radio" name="bonus" value="-5" id="bonus-5">
-    <label for="bonus-5">-5</label>
-    <input type="radio" name="bonus" value="-4" id="bonus-4">
-    <label for="bonus-4">-4</label>
-    <input type="radio" name="bonus" value="-3" id="bonus-3">
-    <label for="bonus-3">-3</label>
-    <input type="radio" name="bonus" value="-2" id="bonus-2">
-    <label for="bonus-2">-2</label>
-    <input type="radio" name="bonus" value="-1" id="bonus-1">
-    <label for="bonus-1">-1</label>
-    <input type="radio" name="bonus" value="0" id="bonus0" checked>
-    <label for="bonus0">0</label>
-    <input type="radio" name="bonus" value="1" id="bonus1">
-    <label for="bonus1">+1</label>
-    <input type="radio" name="bonus" value="2" id="bonus2">
-    <label for="bonus2">+2</label>
-    <input type="radio" name="bonus" value="3" id="bonus3"> 
-    <label for="bonus3">+3</label>
-    <input type="radio" name="bonus" value="4" id="bonus4">
-    <label for="bonus4">+4</label>
-    <input type="radio" name="bonus" value="5" id="bonus5">
-    <label for="bonus5">+5</label>
+    <div class="header">        
+        <div class="portrait">
+            <img src="{{attacker.texture.src}}" width="48" height="48" />
+        </div>
+        <div class="bonus">
+            <input type="radio" name="bonus" value="-5" id="bonus-5">
+            <label for="bonus-5">-5</label>
+            <input type="radio" name="bonus" value="-4" id="bonus-4">
+            <label for="bonus-4">-4</label>
+            <input type="radio" name="bonus" value="-3" id="bonus-3">
+            <label for="bonus-3">-3</label>
+            <input type="radio" name="bonus" value="-2" id="bonus-2">
+            <label for="bonus-2">-2</label>
+            <input type="radio" name="bonus" value="-1" id="bonus-1">
+            <label for="bonus-1">-1</label>
+            <input type="radio" name="bonus" value="0" id="bonus0" checked>
+            <label for="bonus0">0</label>
+            <input type="radio" name="bonus" value="1" id="bonus1">
+            <label for="bonus1">+1</label>
+            <input type="radio" name="bonus" value="2" id="bonus2">
+            <label for="bonus2">+2</label>
+            <input type="radio" name="bonus" value="3" id="bonus3"> 
+            <label for="bonus3">+3</label>
+            <input type="radio" name="bonus" value="4" id="bonus4">
+            <label for="bonus4">+4</label>
+            <input type="radio" name="bonus" value="5" id="bonus5">
+            <label for="bonus5">+5</label>
+        </div>
+        <div class="portrait">
+            <img src="{{target.document.texture.src}}" width="48" height="48" />
+        </div>        
+    </div>
 
-
-    <table>
+    <table style="width:98%;">
         {{#each attacks}}
         <tr>
             <td><img src="{{this.item.img}}" width="48" height="48" /></td>
@@ -40,28 +47,117 @@
             </td>
             <td>
                 <div style="display: flex; flex-direction: row;">
-                    <button data-action="rollAction" data-mode="2d20kh" data-weapon="{{this.item.id}}">adv.</button>
-                    <button data-action="rollAction" data-mode="1d20" data-weapon="{{this.item.id}}">normal</button>
-                    <button data-action="rollAction" data-mode="2d20kl" data-weapon="{{this.item.id}}">dis.</button>
+                    <button data-action="rollAction" data-mode="1" data-weapon="{{this.item.id}}">adv.</button>
+                    <button data-action="rollAction" data-mode="0" data-weapon="{{this.item.id}}">normal</button>
+                    <button data-action="rollAction" data-mode="-1" data-weapon="{{this.item.id}}">dis.</button>
                 </div>
             </td>
         </tr>
         {{/each}}
     </table>
-    <h2>Résultats</h2>
-    <div id="attack-results">
-        {{#each attackResults}}
-        <div class="result {{#if this.active}}{{#if this.success}}success{{^}}failed{{/if}}{{^}}disabled{{/if}}">
-            <span class="total">{{this.roll.total}}</span>
-            <span class="dices">
-                {{#each this.rollResults}}
-                    {{this.result}} <br>
+    <div class="results">
+        <div class="attacks">
+            <h2>Attaques</h2>
+            <div class="dtjul-attack-results">
+                {{#each attackResults}}
+                <div class="dtjul-dice-card {{#if this.active}}{{#if this.success}}success{{^}}failed{{/if}}{{^}}dtjul-disabled{{/if}}">            
+                    <div class="weapon">{{this.weapon.name}}</div>
+                    <div class="dice-result">
+                        <div class="dtjul-dice-total">
+                            <div class="dice-tooltip">
+                                <div class="dice-rolls">
+                                    <div class="roll die d20"><a data-action="removeDiceAction" data-attack="{{this.idx}}">-</a></div>
+                                </div>
+                            </div>
+                            <div>
+                                <a data-action="toggleActiveAction" data-attack="{{this.idx}}">{{this.roll.roll.total}}</a>
+                            </div>
+                            <div class="dice-tooltip">
+                                <div class="dice-rolls">
+                                    <div class="roll die d20"><a data-action="addDiceAction" data-attack="{{this.idx}}">+</a></div>
+                                </div>
+                            </div>
+                        </div>                
+                        <div class="dice-tooltip">
+                            <ol class="dice-rolls">
+                            {{#each this.rolls}}
+                            <li class="roll die d20 {{this.type}}"><a data-action="toggleAdvAction" data-attack="{{../idx}}">{{this.die}}</a></li>
+                            {{/each}}                    
+                            </ol>
+                        </div>                
+                    </div>      
+                    <span class="damage">{{#if this.totalDamage}}( {{this.totalDamage}} ){{^}}—{{/if}}</span>
+                </div>
                 {{/each}}
-            </span>      
-            <span class="damage">{{this.totalDamage}}</span>      
+            </div>
         </div>
-        {{/each}}
-    </div>    
-    <h2>Victime</h2>
-    <p>CA de la cible : {{targetAC}}</p>
+        <div class="target">
+            <h2>Cible</h2>
+            <table>                
+                {{#each damages}}
+                <tr class="{{#if this.active}}dmg{{^}}dtjul-disabled{{/if}}">
+                    <td><img src="{{this.img}}" width="24" height="24" /></td>
+                    <td>
+                        {{this.label}}
+                        {{#if this.active}}
+                            <a class="change" data-action="changeDamageAction" data-damage="{{this.id}}" data-mode="-1">(-)</a>
+                        {{^}}
+                            <a class="change" data-action="changeDamageAction" data-damage="{{this.id}}" data-mode="1">(+)</a>
+                        {{/if}}
+                    </td>
+                    <td class="value">
+                        <span style="white-space: nowrap;">
+                            {{#if this.reduced}}<span class="canceled">{{this.total}}</span>{{/if}}
+                            {{#if this.reduced}}<span class="canceled-motif">({{this.reduced}})</span>{{/if}}
+                            <br>
+                        </span>
+                        {{this.take}}
+                    </td>
+                </tr>
+                {{/each}}
+            </table>
+            <table class="sum">
+                <tr>
+                    <td style="width: 100%;"></td>
+                    <td>
+                        CA
+                        <a class="change" data-action="changeACAction" data-mode="0">(*)</a> 
+                    </td>
+                    <td class="value">
+                        <a class="change" data-action="changeACAction" data-mode="-1">(-)</a> 
+                        {{targetAC}}
+                        <a class="change" data-action="changeACAction" data-mode="1">(+)</a> 
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>HP</td>
+                    <td style="color: darkgreen;">{{currentHP}}</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><strong>Total&nbsp;dégâts</strong></td>
+                    <td><strong>{{totalDamage}}</strong></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>
+                        {{#if totalDamage}}
+                        <button data-action="applyDamageAction">&nbsp;Appliquer&nbsp;→&nbsp;</button>
+                        {{^}}
+                        Après
+                        {{/if}}
+                    </td>
+                    <td style="color: {{projectionColor}}">{{projectionHP}}</td>
+                </tr>
+                {{#each concentrationChecks}}
+                <tr>
+                    <td></td>
+                    <td class="value">Concentration {{this.source}} ({{this.damage}})</td>
+                    <td>DD&nbsp;{{this.dd}}</td>
+                </tr>
+                {{/each}}
+            </table>            
+        </div>
+    </div>
 </div>

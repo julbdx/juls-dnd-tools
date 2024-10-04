@@ -649,7 +649,7 @@ async function julQuickAttack(attackerToken, targetToken)
 
    // Si pas de cible, alors on prend le premier token contrôlé
    if (!targetToken)
-      targetToken = canvas.tokens.controlled[0]?.document;
+      targetToken = canvas.tokens.controlled[0];
    
    // Si toujours pas de cible, on arrête avec un message d'erreur
    if (!targetToken)

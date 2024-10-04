@@ -4,7 +4,7 @@ const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api
 export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
     static DEFAULT_OPTIONS = {
         id: "quick-attack-app",
-        classes: ["dnd5e2", "quick-attack-app"],
+        classes: ["dnd5e2", "dtjul-window", "dtjul-quick-attack-app"],
         tag: "div",
         position: {
             width: 800,
@@ -16,6 +16,13 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
         actions: {
             rollAction: QuickAttackApp.roll,
+            toggleAdvAction: QuickAttackApp.toggleAdv,
+            addDiceAction: QuickAttackApp.addDice,
+            removeDiceAction: QuickAttackApp.removeDice,
+            toggleActiveAction: QuickAttackApp.toggleActive,
+            applyDamageAction: QuickAttackApp.applyDamage,
+            changeACAction: QuickAttackApp.changeAC,
+            changeDamageAction: QuickAttackApp.changeDamage,
         }
     };
 
@@ -29,12 +36,23 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
         super();
         
         this.attackerToken = attackerToken;
-        this.targetToken = targetToken;
+        this.targetToken = targetToken;        
+        this.init();
+    }
+
+    /**
+     * Initialisation
+     */
+    init()
+    {
         this.attackResults = [];
         this.attacks = [];
+        this.damages = [];
+        this.concentrationChecks = [];
 
         // CA de la cible par défaut
-        this.targetAC = targetToken.actor.system.attributes.ac.value ?? 10;
+        this.targetAC = this.targetToken.actor.system.attributes.ac.value ?? 10;
+        this.baseTargetAC = this.targetAC;
 
         if (this.attackerToken.actor?.collections?.items)
         {
@@ -42,14 +60,19 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 if (item.type === "weapon")
                 {
                     this.attacks.push({
-                        item: item,
-                        
+                        item: item,                        
                     });
                 }
             });
         }
+    }
 
-        console.log(this.attackerToken.actor);
+    /**
+     * 
+     */
+    get title()
+    {
+        return `Attaque rapide de «${this.attackerToken.name}» sur «${this.targetToken.name}»`;
     }
 
     /**
@@ -58,74 +81,330 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
      * @param {*} option 
      */
     _renderHTML(context, option)
-    {
-        context.attacker = this.attackerToken.name;
-        context.target = this.targetToken.name;
+    {        
+        context.attacker = this.attackerToken;
+        context.target = this.targetToken;
         context.targetAC = this.targetAC;
         context.attacks = this.attacks;
         context.attackResults = this.attackResults;
+        context.damages = this.damages;
+        let totalDamage = 0;
+        this.damages.forEach(d => {
+            totalDamage += d.take;
+        });
+        context.totalDamage = totalDamage * -1;
+        context.currentHP = this.targetToken.actor.system.attributes.hp.value;
+        context.projectionHP = context.currentHP - totalDamage;
+        if (context.projectionHP < 0)
+            context.projectionHP = 0;
+        context.projectionColor = context.projectionHP <= 0 ? 'red' : 'green';
+        context.concentrationChecks = this.concentrationChecks;
+
         return super._renderHTML(context, option);
     }
 
     async refresh()
     {
         // Pour chaque lancé de dés, recalculer les résultats et lancer les dés de dégâts au besoin
+        let damages = {};
+        this.concentrationChecks = [];
+        let damageTypes = CONFIG.DND5E.damageTypes;
+        
         for (let i = 0; i < this.attackResults.length; i++) {
-            this.attackResults[i].success = this.attackResults[i].roll.total >= this.targetAC;
-
-            // Regardons le résultat du dé plus attentivement
-            let dice = this.attackResults[i].rollResults[0].result;
-            this.attackResults[i].rollResults.forEach(r => {
-                if (this.attackResults[i].mode == 1 && r.result > dice) // avantage, on prend le plus grand
-                    dice = r.result;
-                else if (this.attackResults[i].mode == -1 && r.result < dice) // désavantage, on prend le plus petit
-                    dice = r.result;
-            });
-
-            let critic = false;
-            if (dice == 1)
-                this.attackResults[i].success = false;   // échec critique
-            else if (dice == 20)
+            // Déjà, est-ce que nous avons un jet ?
+            if (this.attackResults[i].rolls.length < 1)
             {
-                this.attackResults[i].success = true;    // réussite critique            
-                critic = true;
+                // Non, lançons le dé
+                const die = new Roll(this.attackResults[i].formula);
+                await die.roll();
+                // Si Dice So Nice est activé, afficher l'animation des dés
+                if (game.dice3d)
+                    game.dice3d.showForRoll(die);  // ne pas attendre la fin de l'animation
+                this.attackResults[i].rolls.push( { roll : die, die : die.terms[0].results[0].result } );
             }
 
-            if (this.attackResults[i].active && this.attackResults[i].success && !this.attackResults[i].damage)
+            // Si nous avons un avantage/désavatange, nous devons regarder tous les jets (au moins 2)
+            if (this.attackResults[i].mode != 0)
             {
-                // On tire les dégâts pour chaque formule de dégâts
-                let rolls = [];
-                this.attackResults[i].damageFormula.forEach(f => {
-                    let formula = f.formula;
-                    // Si c'est un critique, on double le nombre de dés lancé
-                    // On cherche le pattern XdY et on double X avant d'écrire la nouvelle formule
-                    if (critic)
-                        formula = formula.replace(/(\d+)d(\d+)/g, (match, p1, p2) => (parseInt(p1) * 2) + 'd' + p2);
-                    
-                    rolls.push({
-                        type: f.damageType,
-                        roll: new Roll(formula + '[' + f.damageType + ']'),
+                // Avons-nous déjà lancé le deuxième dé ?
+                if (this.attackResults[i].rolls.length < 2)
+                {
+                    // Non, lançons le dé
+                    const die = new Roll(this.attackResults[i].formula);
+                    await die.roll();
+                    // Si Dice So Nice est activé, afficher l'animation des dés
+                    if (game.dice3d)
+                        game.dice3d.showForRoll(die);  // ne pas attendre la fin de l'animation
+                    this.attackResults[i].rolls.push( { roll : die, die : die.terms[0].results[0].result } );
+                }                
+            }
+
+            // Choisissons le meilleur ou le pire des deux jets
+            let roll = this.attackResults[i].rolls[0];                
+            // selon le mode on prend le meilleur ou le pire de tous les jets
+            for (let j = 0; j < this.attackResults[i].rolls.length; j++)
+            {
+                this.attackResults[i].rolls[j].type = 'discarded';
+                if (this.attackResults[i].mode == 1 && this.attackResults[i].rolls[j].roll.total > roll.roll.total)
+                    roll = this.attackResults[i].rolls[j];
+                else if (this.attackResults[i].mode == -1 && this.attackResults[i].rolls[j].roll.total < roll.roll.total)
+                    roll = this.attackResults[i].rolls[j];
+            }
+
+            roll.type = this.attackResults[i].mode < 0 ? 'min' : (this.attackResults[i].mode == 0 ? '' : 'max');
+            this.attackResults[i].roll = roll;
+
+            // Calcul du succès
+            let critic = false;
+            if (this.attackResults[i].roll.die == 1)
+                this.attackResults[i].success = false;   // échec critique
+            else if (this.attackResults[i].roll.die == 20)
+            {
+                critic = true;
+                this.attackResults[i].success = true;    // réussite critique
+            }
+            else
+                this.attackResults[i].success = this.attackResults[i].roll.roll.total >= this.targetAC;
+
+
+            this.attackResults[i].critic = critic;
+
+            // Si c'est un succès, on tire les dégâts
+            if (this.attackResults[i].active && this.attackResults[i].success)
+            {
+                if (!this.attackResults[i].damage)
+                {
+                    // On tire les dégâts pour chaque formule de dégâts
+                    let rolls = [];
+                    this.attackResults[i].damageFormula.forEach(f => {
+                        let formula = f.formula;
+                        // Si c'est un critique, on double le nombre de dés lancé
+                        // On cherche le pattern XdY et on double X avant d'écrire la nouvelle formule
+                        if (critic)
+                            formula = formula.replace(/(\d+)d(\d+)/g, (match, p1, p2) => (parseInt(p1) * 2) + 'd' + p2);
+                        
+                        let weapon = this.attackResults[i].weapon;
+                        let id = weapon.id + '-' + f.damageType;
+                        rolls.push({
+                            id: id,
+                            name: weapon.name,
+                            type: f.damageType,                            
+                            roll: new Roll(formula + '[' + f.damageType + ']'),
+                        });
                     });
-                });
 
-                // Lançons les dés
-                for (let j = 0; j < rolls.length; j++)
-                    await rolls[j].roll.roll();
+                    // Lançons les dés
+                    for (let j = 0; j < rolls.length; j++)
+                        await rolls[j].roll.roll();
 
-                // Montrons les jets de dé tous en même temps !
-                if (game.dice3d) {
-                    rolls.forEach(r => game.dice3d.showForRoll(r.roll));
+                    // Montrons les jets de dé tous en même temps !
+                    if (game.dice3d) {
+                        rolls.forEach(r => game.dice3d.showForRoll(r.roll));
+                    }
+                    
+                    this.attackResults[i].damage = rolls;
+
+                    this.attackResults[i].totalDamage = 0;
+                    this.attackResults[i].damage.forEach(d => {
+                        this.attackResults[i].totalDamage += d.roll.total;
+                    });
                 }
-                
-                this.attackResults[i].damage = rolls;
 
-                this.attackResults[i].totalDamage = 0;
+                let concentrationDD = 0;
+
+                // Calcul des dommages totaux
                 this.attackResults[i].damage.forEach(d => {
-                    this.attackResults[i].totalDamage += d.roll.total;
+                    if (!damages[d.id])
+                        damages[d.id] = {
+                            id: d.id,
+                            type: d.type,
+                            properties: this.attackResults[i].weapon.system.properties,
+                            reduced: null,
+                            label: d.name + ' (' + damageTypes[d.type].label.toLowerCase() + ')',
+                            img: damageTypes[d.type].icon,  
+                            // Pour l'activation, on va chercher les anciens dommages si existant pour reprendre le active
+                            active: this.damages.find(dd => dd.id == d.id) ? this.damages.find(dd => dd.id == d.id).active : true,
+                            total: 0,
+                            take: 0,
+                        };
+
+                    // Calcul des dommages réels
+                    damages[d.id].total += d.roll.total;
+                    
+                    const realDmg = this.targetToken.actor.calculateDamage( [ {
+                        value: d.roll.total, 
+                        type: d.type,
+                        properties: this.attackResults[i].weapon.system.properties, 
+                    } ]); 
+                    
+                    if (damages[d.id].active)
+                    {
+                        realDmg.forEach(dmg => {
+                            concentrationDD += Math.ceil(dmg.value);
+                            damages[d.id].take += Math.ceil(dmg.value);
+                            if (dmg.active.immunity)
+                                damages[d.id].reduced = 'immunity';
+                            else if (dmg.active.resistance)
+                                damages[d.id].reduced = 'resistance';
+                            else if (dmg.active.vulnerability)
+                                damages[d.id].reduced = 'vulnerability';
+                        });
+                    }
+                    else
+                    {
+                        damages[d.id].reduced = 'inactive';
+                    }
                 });
+
+                let concentrationcheck = Math.floor(concentrationDD / 2);
+                if (concentrationcheck < 10)
+                    concentrationcheck = 10;
+
+                this.concentrationChecks.push({ source: this.attackResults[i].weapon.name, damage: concentrationDD, dd: concentrationcheck });
             }
         }
+
+        // conversion damages en array dans this.damages
+        this.damages = Array.from(Object.values(damages));
+
+        // Si la cible n'est pas sous concentration, alors on retire les checks de concentration
+        // pour savoir, on regarde si elle a la propriété "concentration" dans ses effets
+        const concentration = this.targetToken.actor.statuses.has("concentrating");
+
+        if (!concentration)
+            this.concentrationChecks = [];
+
         this.render();
+    }
+
+    /**
+     * Modifie la classe d'armure enregistrée
+     * 
+     * @param {*} event 
+     * @param {*} target 
+     */
+    static async changeAC(event, target)
+    {
+        let bonus = parseInt(target.dataset.mode);
+        if (bonus == 0)
+            this.targetAC = this.baseTargetAC;
+        else
+            this.targetAC += bonus;
+
+        await this.refresh();
+    }
+
+     /**
+     * Active/désactive une ligne de dommage
+     * 
+     * @param {*} event 
+     * @param {*} target 
+     */
+     static async changeDamage(event, target)
+     {
+        const id = target.dataset.damage;
+        // on cherche les dommages concernés        
+        let d = this.damages.find(d => d.id == id);
+        if (d)
+            d.active = parseInt(target.dataset.mode) > 0;
+
+        // recalcul
+        await this.refresh();
+     }     
+
+    /**
+     * Ajoute un dé à l'attaque
+     * 
+     * @param {*} event 
+     * @param {*} target 
+     */
+    static async addDice(event, target)
+    {
+        const idx = target.dataset.attack;
+        let attack = this.attackResults[idx];
+        
+        // Ajoutons le dé
+        const die = new Roll(attack.formula);
+        await die.roll();
+        // Si Dice So Nice est activé, afficher l'animation des dés
+        if (game.dice3d)
+            game.dice3d.showForRoll(die);  // ne pas attendre la fin de l'animation
+        attack.rolls.push( { roll : die, die : die.terms[0].results[0].result } );
+
+        // Si on est en mode normal, on passe en mode avantage (car nous avons plus d'un dé)
+        if (attack.mode == 0)
+            attack.mode = 1;        
+
+        // On recalcule
+        await this.refresh();
+    }
+
+    /**
+     * Retire un dé à l'attaque
+     * 
+     * @param {*} event 
+     * @param {*} target 
+     */
+    static async removeDice(event, target)
+    {
+        const idx = target.dataset.attack;
+        let attack = this.attackResults[idx];
+        
+        // Retirons le dernier dé
+        if (attack.rolls.length > 0)
+            attack.rolls.pop();
+
+        if (attack.rolls.length < 2)    // On repasse à normal si on a moins de 2 dés
+            attack.mode = 0;
+
+        // On recalcule
+        await this.refresh();
+    }
+    
+    /**
+     * Toggle advantage/disadvantage/normal
+     * 
+     * @param {*} event 
+     * @param {*} target 
+     */
+    static async toggleAdv(event, target)
+    {
+        const idx = target.dataset.attack;
+        let attack = this.attackResults[idx];
+        // Switch mode
+        switch (attack.mode)
+        {
+            case 0: // On est normal, on passe avec avantage
+                attack.mode = 1;
+                break;
+            case 1: // avantage, on passe en désavantage
+                attack.mode = -1;
+                break;
+            case -1: // désavantage, on repasse en normal
+                attack.mode = 0;
+                break;
+        }
+
+        // On recalcule
+        await this.refresh();
+    }
+
+    /**
+     * Toggle active dice
+     * 
+     * @param {*} event 
+     * @param {*} target 
+     */
+    static async toggleActive(event, target)
+    {
+        const idx = target.dataset.attack;
+        let attack = this.attackResults[idx];
+
+        // Switch active
+        attack.active = !attack.active;        
+
+        // On recalcule
+        await this.refresh();
     }
 
     /**
@@ -137,17 +416,13 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
     {
         const weapon = this.attackerToken.actor.collections.items.get(target.dataset.weapon);
 
-        const roll = new Roll(target.dataset.mode + " + " + (weapon.labels.modifier ?? '0'));
-        await roll.roll();
-        // Si Dice So Nice est activé, afficher l'animation des dés
-        if (game.dice3d) {
-            game.dice3d.showForRoll(roll);  // ne pas attendre la fin de l'animation
-        }
-
         this.attackResults.push({
-            roll: roll,
-            mode: target.dataset.mode == '2d20kh' ? 1 : (target.dataset.mode == '2d20kl' ? -1 : 0),
-            rollResults: roll.terms[0].results,
+            idx: this.attackResults.length,
+            formula: "1d20 + " + (weapon.labels.modifier ?? '0'),
+            weapon: weapon,
+            roll: null,
+            rolls: [],
+            mode: parseInt(target.dataset.mode),
             damageFormula: weapon.labels.damages,
             totalDamage: 0,
             damage: null,
@@ -155,6 +430,80 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
             success: false,
         });
 
-        this.refresh();
+        await this.refresh();
+    }
+
+    /**
+     * Appliquer les dommages à la cible
+     * 
+     * @param {*} event 
+     * @param {*} target 
+     */
+    static async applyDamage(event, target)
+    {
+        // On applique les dégâts à la cible
+        this.damages.forEach(d => {
+            console.log(d.properties);
+            this.targetToken.actor.applyDamage( [ {
+                value: d.take, 
+                //type: d.type,
+                //properties: d.properties, 
+            } ]);
+        });
+
+        // Si après, la cible est morte (pv <= 0), on lui met l'état "mort" si ce n'est pas un PJ
+        let token = this.targetToken;
+        if (token.actor.system.attributes.hp.value <= 0)
+        {       
+            const proneEffect = CONFIG.statusEffects.find(e => e.id === "prone");
+            const unconsciousEffect = CONFIG.statusEffects.find(e => e.id === "unconscious");
+
+            await token.toggleEffect(proneEffect);
+            await token.toggleEffect(unconsciousEffect);     
+            if (!token.actor.hasPlayerOwner) {                
+                const deadEffect = CONFIG.statusEffects.find(e => e.id === "dead");                
+                await token.toggleEffect(deadEffect);
+            }
+        }
+
+        // On lance les jets de concentration
+        for (let i = 0; i < this.concentrationChecks.length; i++)
+        {
+            if (token.actor.system.attributes.hp.value <= 0)
+                break;   // Il est mort, il n'y a plus de concentration, pas besoin de checker
+            let c = this.concentrationChecks[i];
+            
+            const r = await token.actor.rollConcentration({
+                targetValue: c.dd,
+            });
+
+            if (r.total < c.dd)
+            {
+                // failed ! 
+                // on retire toutes les concentrations du token
+                let concentrationEffects = token.actor.effects.filter(eff => eff.name.toLowerCase().includes("concentrat"));
+
+                for (let effect of concentrationEffects) {
+                    await effect.delete();
+                }
+                
+                // Et c'est fini,
+                break;
+            }
+        }
+        
+
+        return;
+        // On avance l'initiative et on ferme la fenêtre
+        const combat = game.combat;
+        const current = combat.combatant;
+        const next = combat.turns.findIndex(t => t.id == current.id) + 1;
+        if (next >= combat.turns.length)
+            await combat.nextRound();
+        else
+            await combat.update({ turn: next });
+
+        // On ferme la fenêtre 
+        this.close();
     }
 }
