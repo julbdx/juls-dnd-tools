@@ -519,15 +519,11 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
         
         if (token.actor.system.attributes.hp.value <= 0)
         {       
-            const proneEffect = CONFIG.statusEffects.find(e => e.id === "prone");
-            const unconsciousEffect = CONFIG.statusEffects.find(e => e.id === "unconscious");
-
-            await token.toggleEffect(proneEffect);
-            await token.toggleEffect(unconsciousEffect);
+            await token.actor.toggleStatusEffect("prone");
+            await token.actor.toggleStatusEffect("unconscious");
             
             if (!token.actor.hasPlayerOwner) {                
-                const deadEffect = CONFIG.statusEffects.find(e => e.id === "dead");                
-                await token.toggleEffect(deadEffect);
+                await token.actor.toggleStatusEffect("dead");
             }
         }
 
