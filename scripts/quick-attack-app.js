@@ -83,7 +83,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
      * @param {*} option 
      */
     _renderHTML(context, option)
-    {        
+    {
         context.attacker = this.attackerToken;
         context.target = this.targetToken;
         context.targetAC = this.targetAC;
@@ -91,6 +91,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
         context.attackResults = this.attackResults;
         context.damages = this.damages;
         context.bonus = this.bonus;
+        context.bonusStr = !this.bonus ? '' : (this.bonus > 0 ? '+' + this.bonus : this.bonus);
         let totalDamage = 0;
         this.damages.forEach(d => {
             totalDamage += d.take;
@@ -123,7 +124,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 // Si Dice So Nice est activé, afficher l'animation des dés
                 if (game.dice3d)
                     game.dice3d.showForRoll(die);  // ne pas attendre la fin de l'animation
-                this.attackResults[i].rolls.push( { roll : die, die : die.terms[0].results[0].result } );
+                this.attackResults[i].rolls.push( { roll : die, die : die.terms[0].results[0].result, result: die.total } );
             }
 
             // Si nous avons un avantage/désavatange, nous devons regarder tous les jets (au moins 2)
@@ -138,9 +139,13 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                     // Si Dice So Nice est activé, afficher l'animation des dés
                     if (game.dice3d)
                         game.dice3d.showForRoll(die);  // ne pas attendre la fin de l'animation
-                    this.attackResults[i].rolls.push( { roll : die, die : die.terms[0].results[0].result } );
+                    this.attackResults[i].rolls.push( { roll : die, die : die.terms[0].results[0].result, result: die.total } );
                 }                
             }
+
+            // Recalcul du résult en prenant en compte le bonus
+            for (let j = 0; j < this.attackResults[i].rolls.length; j++)
+                this.attackResults[i].rolls[j].result = this.attackResults[i].rolls[j].roll.total + this.bonus;
 
             // Choisissons le meilleur ou le pire des deux jets
             let roll = this.attackResults[i].rolls[0];                
@@ -191,8 +196,8 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                         rolls.push({
                             id: id,
                             name: weapon.name,
-                            type: f.damageType,                            
-                            roll: new Roll(formula + '[' + f.damageType + ']'),
+                            type: f.damageType,
+                            roll: new Roll(formula + '[' + f.damageType + ']'),                            
                         });
                     });
 
@@ -356,7 +361,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
         // Si Dice So Nice est activé, afficher l'animation des dés
         if (game.dice3d)
             game.dice3d.showForRoll(die);  // ne pas attendre la fin de l'animation
-        attack.rolls.push( { roll : die, die : die.terms[0].results[0].result } );
+        attack.rolls.push( { roll : die, die : die.terms[0].results[0].result, result: die.total } );
 
         // Si on est en mode normal, on passe en mode avantage (car nous avons plus d'un dé)
         if (attack.mode == 0)

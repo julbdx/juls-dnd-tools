@@ -630,11 +630,16 @@ async function julQuickAttack(attackerToken, targetToken)
 {
    // Si pas d'acteur, alors on prend l'acteur dont c'est le tour de combat
    if (!attackerToken)
-      attackerToken = game.combat?.combatant?.token;
+   {
+      const c = game.combat?.combatant?.token;
+      // On cherche le token de l'acteur dont c'est le tour
+      if (c)
+         attackerToken = canvas.tokens.get(c._id);
+   }
 
    // Si toujours pas d'acteur, on prend le premier acteur sélectionné
    if (!attackerToken)
-      attackerToken = canvas.tokens.controlled[0]?.token;
+      attackerToken = canvas.tokens.controlled[0];
 
    // Si toujours pas d'acteur, on arrête avec un message d'erreur
    if (!attackerToken)
@@ -645,7 +650,7 @@ async function julQuickAttack(attackerToken, targetToken)
 
    // Détermination de la cible
    if (!targetToken)
-      targetToken = game.user.targets.values().next().value?.document;
+      targetToken = game.user.targets.values().next().value;
 
    // Si pas de cible, alors on prend le premier token contrôlé
    if (!targetToken)
@@ -655,6 +660,12 @@ async function julQuickAttack(attackerToken, targetToken)
    if (!targetToken)
    {
       ui.notifications.error("Aucune cible n'est sélectionnée !");
+      return;
+   }
+
+   if (targetToken.id === attackerToken.id)
+   {
+      ui.notifications.error("La cible et l'attaquant ne peuvent pas être la même personne !");
       return;
    }
 

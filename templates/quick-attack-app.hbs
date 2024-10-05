@@ -2,15 +2,12 @@
     <!-- des radio de -5 à +5 -->
     <div class="header">        
         <div class="portrait">
-            <img src="{{attacker.texture.src}}" width="48" height="48" />
+            <img src="{{attacker.document.texture.src}}" width="48" height="48" />
         </div>
         <div class="bonus header">
             <button data-action="changeBonusAction" data-mode="-1">-</button>
-            <strong style="white-space: nowrap;">Modificateur : {{#if bonus}}{{bonus}}{{^}}aucun bonus{{/if}}</strong>
+            <strong style="white-space: nowrap;">{{# if bonus}}Modificateur : {{bonusStr}}{{^}}Aucun bonus{{/if}}</strong>
             <button data-action="changeBonusAction" data-mode="1"">+</button>
-        </div>
-        <div>
-            {{bonus}}
         </div>
         <div class="portrait">
             <img src="{{target.document.texture.src}}" width="48" height="48" />
@@ -23,7 +20,7 @@
             <td><img src="{{this.item.img}}" width="48" height="48" /></td>
             <td>{{this.item.name}}</td>
             <td>{{this.item.labels.range}}</td>
-            <td>+{{this.item.labels.modifier}}</td>
+            <td>+{{this.item.labels.modifier}} {{../bonusStr}}</td>
             <td>
                 {{#each this.item.labels.damages}}
                 {{this.label}} <br>
@@ -54,7 +51,7 @@
                                 </div>
                             </div>
                             <div>
-                                <a data-action="toggleActiveAction" data-attack="{{this.idx}}">{{this.roll.roll.total}}</a>
+                                <a data-action="toggleActiveAction" data-attack="{{this.idx}}">{{this.roll.result}}</a>
                             </div>
                             <div class="dice-tooltip">
                                 <div class="dice-rolls">
