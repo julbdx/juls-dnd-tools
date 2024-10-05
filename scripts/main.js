@@ -383,8 +383,9 @@ Hooks.once("ready", () => {
    });
 
    // Publication de fonction pour les macros
-   game.modules.get("juls-dnd-tools").julQuickAttack = julQuickAttack;
-
+   let m = game.modules.get("juls-dnd-tools");
+   m.julQuickAttack = julQuickAttack;
+   m.julQuickDamage = julQuickDamage;
 });
 
 Hooks.on("dnd5e.preRollAttackV2", (context, rollConfig) => {
@@ -672,4 +673,14 @@ async function julQuickAttack(attackerToken, targetToken)
    // Créer et afficher l'application
    const app = new QuickAttackApp(attackerToken, targetToken);
    app.render(true);  // Afficher l'application
+}
+
+/**
+ * Fonction pour macro qui déclenche un dégât rapide
+ * 
+ * @param {} target 
+ */
+async function julQuickDamage(target)
+{
+   
 }
