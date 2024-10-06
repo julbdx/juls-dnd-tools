@@ -526,7 +526,8 @@ Hooks.on('renderImagePopout', async (app, html, data) => {
 
       let orientation = await getImageOrientation(data.image);
 
-      let startTimer = 1000;
+      let duree = 10000;
+      let startTimer = 2000;
       let title = '';
       let subtitle = '';
 
@@ -534,13 +535,13 @@ Hooks.on('renderImagePopout', async (app, html, data) => {
       if (parts.length > 1)
       {         
          title = parts[1].trim();
-         if (parts.length > 2)
+         if (parts.length > 2 && parts[1].trim() != '')
          {
             subtitle = '— ' + parts[1].trim() + ' —';
             title = parts[2].trim();
 
             if (parts.length > 4)
-               startTimer = parts[4].trim() * 1000;
+               duree = parts[4].trim() * 1000;
          }         
       }      
 
@@ -617,10 +618,11 @@ Hooks.on('renderImagePopout', async (app, html, data) => {
                   });
                }, 1000); // Delay to match the appearance of the text
                
-         }, 8000); // Delay to match the appearance of the text
+         }, duree); // Delay to match the appearance of the text
       }, startTimer); // Delay to match the appearance of the text
    }
 });
+
 
 /**
  * Fonction pour macro qui déclenche une attaque rapide
