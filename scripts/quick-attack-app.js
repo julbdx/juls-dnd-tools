@@ -192,7 +192,8 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                             formula = formula.replace(/(\d+)d(\d+)/g, (match, p1, p2) => (parseInt(p1) * 2) + 'd' + p2);
                         
                         let weapon = this.attackResults[i].weapon;
-                        let id = weapon.id + '-' + f.damageType;
+                        //let id = weapon.id + '-' + f.damageType;    // pour regrouper les dégâts par type
+                        let id = i;                        // pour ne pas regrouper les dégâts
                         rolls.push({
                             id: id,
                             name: weapon.name,
@@ -231,26 +232,53 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                             label: d.name + ' (' + damageTypes[d.type].label.toLowerCase() + ')',
                             img: damageTypes[d.type].icon,  
                             // Pour l'activation, on va chercher les anciens dommages si existant pour reprendre le active
-                            active: this.damages.find(dd => dd.id == d.id) ? this.damages.find(dd => dd.id == d.id).active : true,
+                            active: this.damages.find(dd => dd.id == d.id) ? this.damages.find(dd => dd.id == d.id).active : 0,
+                            normal: false,
+                            full: false,
+                            resistance: false,
+                            immunity: false,
                             total: 0,
                             take: 0,
                             nb: 0,
                         };
 
                     // Calcul des dommages réels
-                    damages[d.id].total += d.roll.total;
-                    
+                    damages[d.id].total += d.roll.total;                    
+
+                    // Calcul des flags
+                    damages[d.id].normal = false;
+                    damages[d.id].full = false;
+                    damages[d.id].resistance = false;
+                    damages[d.id].immunity = false;
+                    switch (damages[d.id].active)
+                    {
+                        case 1: // pas d'activation, on prend le résultat
+                            damages[d.id].full = true;
+                            break;
+                        case 2: // résistance, on divise par 2
+                            damages[d.id].resistance = true;
+                            break;
+                        case 3: // immunité, on ignore
+                            damages[d.id].immunity = true;
+                            break;
+                        default:
+                            damages[d.id].normal = true;
+                            break;
+                    }
+
                     const realDmg = this.targetToken.actor.calculateDamage( [ {
                         value: d.roll.total, 
                         type: d.type,
                         properties: this.attackResults[i].weapon.system.properties, 
                     } ]); 
-                    
-                    if (damages[d.id].active)
+                                        
+                    let computedRealDmg = 0;
+
+                    if (damages[d.id].active == 0)
                     {
-                        let computedRealDmg = 0;
                         realDmg.forEach(dmg => {
-                            computedRealDmg += dmg.value;                            
+                            computedRealDmg += dmg.value;
+
                             if (dmg.active.immunity)
                                 damages[d.id].reduced = 'immunity';
                             else if (dmg.active.resistance)
@@ -258,18 +286,28 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                             else if (dmg.active.vulnerability)
                                 damages[d.id].reduced = 'vulnerability';
                         });
-
-                        computedRealDmg = Math.ceil(computedRealDmg);
-                        if (computedRealDmg != 0)
-                        {
-                            concentrationDD += computedRealDmg;
-                            damages[d.id].nb++;
-                            damages[d.id].take += computedRealDmg;
-                        }
+                    }
+                    else if (damages[d.id].active == 1)
+                    {
+                        damages[d.id].reduced = 'full';
+                        computedRealDmg = d.roll.total; 
+                    }
+                    else if (damages[d.id].active == 2)
+                    {
+                        damages[d.id].reduced = 'resistance';
+                        computedRealDmg = d.roll.total / 2.0; 
                     }
                     else
                     {
-                        damages[d.id].reduced = 'inactive';
+                        damages[d.id].reduced = 'immunity';
+                    }
+
+                    computedRealDmg = Math.ceil(computedRealDmg);
+                    if (computedRealDmg != 0)
+                    {
+                        concentrationDD += computedRealDmg;
+                        damages[d.id].nb++;
+                        damages[d.id].take += computedRealDmg;
                     }
                 });
 
@@ -323,7 +361,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
         // on cherche les dommages concernés        
         let d = this.damages.find(d => d.id == id);
         if (d)
-            d.active = parseInt(target.dataset.mode) > 0;
+            d.active = parseInt(target.dataset.mode);
 
         // recalcul
         await this.refresh();

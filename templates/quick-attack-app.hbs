@@ -76,15 +76,23 @@
             <h2>Cible</h2>
             <table>                
                 {{#each damages}}
-                <tr class="{{#if this.active}}dmg{{^}}dtjul-disabled{{/if}}">
+                <tr>
                     <td><img src="{{this.img}}" width="24" height="24" /></td>
                     <td>
                         {{this.nb}}x {{this.label}}
-                        {{#if this.active}}
-                            <a class="change" data-action="changeDamageAction" data-damage="{{this.id}}" data-mode="-1">(-)</a>
-                        {{^}}
-                            <a class="change" data-action="changeDamageAction" data-damage="{{this.id}}" data-mode="1">(+)</a>
+                        &nbsp;
+                        {{#if this.normal}}
+                        <a class="change" data-action="changeDamageAction" data-damage="{{this.id}}" data-mode="1"><i class="far fa-life-ring"></i></a>
                         {{/if}}
+                        {{#if this.full}}
+                        <a class="change" data-action="changeDamageAction" data-damage="{{this.id}}" data-mode="2"><i class="far fa-shield"></i></a>
+                        {{/if}}
+                        {{#if this.resistance}}
+                        <a class="change" data-action="changeDamageAction" data-damage="{{this.id}}" data-mode="3"><i class="fas fa-shield-alt"></i></a>
+                        {{/if}}
+                        {{#if this.immunity}}
+                        <a class="change" data-action="changeDamageAction" data-damage="{{this.id}}" data-mode="0"><i class="fas fa-shield"></i></a>
+                        {{/if}}                        
                     </td>
                     <td class="value">
                         <span style="white-space: nowrap;">

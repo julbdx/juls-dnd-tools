@@ -161,9 +161,8 @@ Hooks.once("init", () => {
 
          // Toujours pas ? Recherche par nom !
          actor = game.actors.getName(this.data.name);
-         
          if (isTrustedManualRollForActor(actor))
-         {            
+         {           
             const r = await this.manualRollDialog(obj['title']);
 
             switch (r)
@@ -681,6 +680,5 @@ async function julQuickAttack(attackerToken, targetToken)
  * @param {} target 
  */
 async function julQuickDamage(target)
-{
-   
+{   
 }
