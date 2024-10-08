@@ -1,0 +1,53 @@
+<div>
+    <!-- des radio de -5 à +5 -->
+    <div class="header">        
+        <div class="portraits">
+        {{#each targets}}                
+            <div>
+                <img src="{{this.document.texture.src}}" width="48" height="48" />
+                <div class="infos">
+                    <div class="ac">AC : {{this.document.actor.system.attributes.ac.value}}</div>
+                    <div class="hp">HP : {{this.document.actor.system.attributes.hp.value}}</div>
+                </div>
+            </div>
+        {{/each}}
+        </div>
+    </div>
+
+    <table style="width: 96%;">
+        {{#each damages}}
+        <tr>
+            <td style="width: 32px;"><img src="{{this.img}}" width="24" height="24" /></td>
+            <td>{{this.label}}</td>
+            <td>
+                <input style="text-align: center;" type="text" name="{{this.type}}" value="{{this.value}}" data-damage="{{this.type}}" />
+            </td>
+        </tr>
+        {{/each}}
+    </table>
+    <div class="choices">
+        <a class="choice{{#if st_no}} active-choice{{/if}}" data-action="changeSavingThrowAction" data-value="">PAS DE JS</a>
+        <a class="choice{{#if st_str}} active-choice{{/if}}" data-action="changeSavingThrowAction" data-value="str">STR</a>
+        <a class="choice{{#if st_dex}} active-choice{{/if}}" data-action="changeSavingThrowAction" data-value="dex">DEX</a>
+        <a class="choice{{#if st_con}} active-choice{{/if}}" data-action="changeSavingThrowAction" data-value="con">CON</a>
+        <a class="choice{{#if st_int}} active-choice{{/if}}" data-action="changeSavingThrowAction" data-value="int">INT</a>
+        <a class="choice{{#if st_wis}} active-choice{{/if}}" data-action="changeSavingThrowAction" data-value="wis">WIS</a>
+        <a class="choice{{#if st_cha}} active-choice{{/if}}" data-action="changeSavingThrowAction" data-value="cha">CHA</a>
+    </div>
+    {{#unless st_no}}
+    <div class="choices">
+        <input type="text" name="stdc" value="{{st_dc}}" style="flex-grow: 1; text-align: center; font-weight: bold;"/>
+        <a class="choice{{#if st_no_dmg}} active-choice{{/if}}" data-action="changeSavingThrowEffectAction" data-value="0">Pas de dégâts</a>
+        <a class="choice{{#if st_half_dmg}} active-choice{{/if}}" data-action="changeSavingThrowEffectAction" data-value="0.5">Dégâts réduits</a>
+    </div>
+    {{/unless}}
+    <hr>
+    <div class="footer">
+        <div class="attacks">
+            <a data-action="changeNbAttacksAction" data-value="-1">-</a>
+            <strong>{{nbAttacks}} attaque(s)</strong>
+            <a data-action="changeNbAttacksAction" data-value="1">+</a>
+        </div>
+        <button data-action="applyDamageAction">&nbsp;Appliquer&nbsp;→&nbsp;</button>
+    </div>
+</div>

@@ -1,6 +1,7 @@
 import constants from "../Constants.js";
 import { registerSettings } from "./settings.js";
 import { QuickAttackApp } from './quick-attack-app.js';
+import { QuickDamageApp } from './quick-damage-app.js';
 
 /*
 Midi QOL :
@@ -681,6 +682,30 @@ async function julQuickAttack(attackerToken, targetToken)
  * 
  * @param {} target 
  */
-async function julQuickDamage(target)
-{   
+async function julQuickDamage(targetsTokens, defaultDamage = 'force')
+{
+   // Détermination de la cible
+   if (!targetsTokens || targetsTokens.length == 0)
+   {
+      targetsTokens = [];
+      // On met dans targetsToken tous les tokens targetés
+      game.user.targets.forEach(target => {
+         targetsTokens.push(target);
+      });            
+   }
+
+   // Si pas de cible, alors on prend le premier token contrôlé
+   if (!targetsTokens || targetsTokens.length == 0)
+      targetsTokens = canvas.tokens.controlled;
+   
+   // Si toujours pas de cible, on arrête avec un message d'erreur
+   if (!targetsTokens || targetsTokens.length == 0)
+   {
+      ui.notifications.error("Aucune cible n'est sélectionnée !");
+      return;
+   }
+
+   // Créer et afficher l'application
+   const app = new QuickDamageApp(targetsTokens, defaultDamage);
+   app.render(true);  // Afficher l'application
 }

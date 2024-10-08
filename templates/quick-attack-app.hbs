@@ -7,7 +7,7 @@
         <div class="bonus header">
             <button data-action="changeBonusAction" data-mode="-1">-</button>
             <strong style="white-space: nowrap;">{{# if bonus}}Modificateur : {{bonusStr}}{{^}}Aucun bonus{{/if}}</strong>
-            <button data-action="changeBonusAction" data-mode="1"">+</button>
+            <button data-action="changeBonusAction" data-mode="1">+</button>
         </div>
         <div class="portrait">
             <img src="{{target.document.texture.src}}" width="48" height="48" />
@@ -18,7 +18,9 @@
         {{#each attacks}}
         <tr>
             <td><img src="{{this.item.img}}" width="48" height="48" /></td>
-            <td>{{this.item.name}}</td>
+            <td>
+                <a data-action="itemInfoAction" data-item="{{this.item.id}}">{{this.item.name}}</a>
+            </td>
             <td>{{this.item.labels.range}}</td>
             <td>+{{this.item.labels.modifier}} {{../bonusStr}}</td>
             <td>

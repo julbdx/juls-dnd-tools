@@ -24,6 +24,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
             changeACAction: QuickAttackApp.changeAC,
             changeDamageAction: QuickAttackApp.changeDamage,
             changeBonusAction: QuickAttackApp.changeBonus,
+            itemInfoAction: QuickAttackApp.itemInfo,
         }
     };
 
@@ -57,12 +58,27 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.baseTargetAC = this.targetAC;
 
         if (this.attackerToken.actor?.collections?.items)
-        {
+        {            
             this.attackerToken.actor.collections.items.forEach(item => {                
                 if (item.type === "weapon")
                 {
                     this.attacks.push({
-                        item: item,                        
+                        item: item,
+                    });
+                }
+                else if (item.type == "spell")
+                {
+                    // On parcours les activités à la recherche d'une activité d'attaques
+
+                    // As-t-on encore assez de slot pour lancer ce sort ?
+                    item.system.activities.forEach(act => {
+                        if (act.type == "attack")
+                        {
+                            let level = item.system.level;
+                            let slots = this.attackerToken.actor.system.spells['spell' + level]; 
+                            if (level == 0 || slots.value > 0)
+                                this.attacks.push({ item: item, });
+                        }
                     });
                 }
             });
@@ -191,6 +207,9 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                         if (critic)
                             formula = formula.replace(/(\d+)d(\d+)/g, (match, p1, p2) => (parseInt(p1) * 2) + 'd' + p2);
                         
+                        // Injection du type de dégâts derrière les dés
+                        formula = formula.replace(/d(\d+)/, 'd$1[' + f.damageType + ']');
+
                         let weapon = this.attackResults[i].weapon;
                         //let id = weapon.id + '-' + f.damageType;    // pour regrouper les dégâts par type
                         let id = i;                        // pour ne pas regrouper les dégâts
@@ -198,7 +217,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                             id: id,
                             name: weapon.name,
                             type: f.damageType,
-                            roll: new Roll(formula + '[' + f.damageType + ']'),                            
+                            roll: new Roll(formula),
                         });
                     });
 
@@ -306,7 +325,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                     if (computedRealDmg != 0)
                     {
                         concentrationDD += computedRealDmg;
-                        damages[d.id].nb++;
+                        damages[d.id].nb = 1;
                         damages[d.id].take += computedRealDmg;
                     }
                 });
@@ -330,6 +349,20 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
             this.concentrationChecks = [];
 
         this.render();
+    }
+
+    /**
+     * Affichage des informations d'item
+     * 
+     * @param {} event 
+     * @param {*} target 
+     */
+    static async itemInfo(event, target)
+    {
+        const itemId = target.dataset.item;
+        const item = this.attackerToken.actor.collections.items.get(itemId);
+        if (item)
+            item.sheet.render(true);
     }
 
     /**
@@ -576,13 +609,13 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 targetValue: c.dd,
             });
 
-            if (r.total < c.dd)
+            if (r && r.total < c.dd)
             {
                 // failed ! 
                 // on retire toutes les concentrations du token
                 let concentrationEffects = token.actor.effects.filter(eff => eff.name.toLowerCase().includes("concentrat"));
 
-                chatContent += `<li>✖ Concentration : ${c.source} : ${r.total}/${c.dd} : raté !</li>`;
+                chatContent += `<li>✖ Concentration : ${c.source} : ${r.total}/${c.dd} : raté !</li>`;                
 
                 for (let effect of concentrationEffects) {
                     await effect.delete();
@@ -591,10 +624,12 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 // Et c'est fini,
                 break;
             }
-            else
+            else if (r)
             {
                 chatContent += `<li>✔ Concentration : ${c.source} : ${r.total}/${c.dd} : réussi !</li>`;
             }
+            else
+                chatContent += `<li>✔ Concentration : ignoré !</li>`;
         }
 
         chatContent += `</ul>`;

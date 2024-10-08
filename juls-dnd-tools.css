@@ -199,6 +199,22 @@ overflow: hidden !important;
       }
   }
 
+  .dtjul-window {
+    font-family: var(--font-primary);
+  }
+
+  .dtjul-window .choice {
+    font-weight: bold;
+    font-size: var(--font-size-12);
+    text-transform: uppercase;
+    opacity: 0.5;
+    padding: 4px;
+  }
+
+  .dtjul-window .active-choice {
+    opacity: 1;
+  }
+
   .dtjul-window .window-header {
     margin-block-end: 0 !important;
   }
@@ -332,3 +348,51 @@ overflow: hidden !important;
     opacity: 0.8;
     padding: 4px 0;
   }
+
+  .dtjul-quick-damage-app .portraits {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 0.5rem;
+  }
+
+  .dtjul-quick-damage-app .header img {
+    border-radius: 50% !important;
+  }  
+
+  .dtjul-quick-damage-app table th, .dtjul-quick-damage-app table td {
+    padding: 2px 2px !important;
+  }
+
+.dtjul-quick-damage-app .infos {
+  text-align: center;
+  font-size: var(--font-size-11);
+  font-weight: bold;
+}
+
+.dtjul-quick-damage-app .infos .hp { color: forestgreen; }
+.dtjul-quick-damage-app .infos .ac { color: darkorange; }
+
+.dtjul-quick-damage-app .footer {
+  display: flex;
+  flex-direction: row;  
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.dtjul-quick-damage-app .attacks {
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 110%;
+  white-space: nowrap;  
+}
+
+.dtjul-quick-damage-app .choices {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
