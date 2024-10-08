@@ -396,3 +396,31 @@ overflow: hidden !important;
   justify-content: space-between;
 }
 
+.dtjul-merchant .window-header .cr-xp {
+  display: none;
+}
+
+.dtjul-merchant .sheet-header {  
+  height: 250px;
+  background-repeat: no-repeat;
+  background-size: cover;  
+  background-position: center;  
+}
+
+.dtjul-merchant .top {
+  color: whitesmoke;
+  /* ombre portée sous le texte */
+  text-shadow: 0px 0px 10px #000000c5;
+}
+
+.dtjul-merchant .top .desc {
+  border-radius: 8px;
+  background:rgba(0, 0, 0, 0.5);
+  padding: 1ex 1em;
+}
+
+.dtjul-merchant .top .desc p {
+  margin: 0.2ex 0; 
+  padding: 0;
+  color: whitesmoke;  
+}

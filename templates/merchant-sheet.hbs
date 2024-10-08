@@ -1,0 +1,482 @@
+<form class="interactable tab-features type-merchant" autocomplete="off">
+  <header class="sheet-header" style="background-image: url({{ actor.img }})">
+    <div class="left">
+      <div class="portrait">
+        {{!-- Portrait --}}
+        {{#if editable}}
+        <label class="slide-toggle">
+          <input
+            type="checkbox"
+            name="flags.dnd5e.showTokenPortrait"
+            {{
+            checked
+            portrait.token
+            }}
+          />
+          {{#if portrait.token}}
+          {{ localize "DOCUMENT.Token" }}
+          <i class="fas fa-toggle-on"></i>
+          {{else}}
+          {{ localize "DND5E.Portrait" }}
+          <i class="fas fa-toggle-off"></i>
+          {{/if}}
+        </label>
+        {{/if}}
+        
+        {{#if (and editable portrait.path)}}
+            <img src="{{ portrait.path }}" alt="{{ actor.name }}"data-edit="{{ portrait.path }}">
+        {{^}}
+            <img src="{{ myPortrait }}" alt="{{ actor.name }}">
+        {{/if}}
+      </div>
+    </div>
+
+    <div class="right stats">
+      <div class="top">
+        <div class="left">
+          {{!-- Name --}}
+          {{#if editable}}
+          <input type="text" name="name" class="document-name uninput" value="{{ actor.name }}" />
+          {{else}}
+          <div class="document-name">{{ actor.name }}</div>
+          {{/if}}
+          <div class="desc">
+            {{{ enriched.public }}}
+          </div>
+        </div>
+
+        <div class="right">
+          <div class="left">
+            <div class="sheet-header-buttons">
+              {{#if isGM}}
+              <button
+                type="button"
+                class="price-modifier gold-button"
+                name="price-modifier"
+                data-tooltip="{{localize 'LOOTSHEET.PriceModifier'}}"
+                aria-label="{{localize 'LOOTSHEET.PriceModifier'}}"
+              >
+                <i class="fa fa-balance-scale"></i>
+              </button>
+              {{/if}}              
+            </div>
+          </div>
+        </div>
+      </div>      
+      <div class="bottom"></div>
+    </div>
+  </header>
+
+  <section class="sheet-body">
+    <div class="main-content">
+      {{#if @root.editable}}
+      <div class="sidebar">        
+        <div class="pills-group merchant-settings">
+          <h3 class="icon" data-tooltip="{{localize 'LOOTSHEET.MerchantSettingsInfo'}}">
+            <i class="fas fa-balance-scale"></i>
+            <span class="roboto-upper">{{localize 'LOOTSHEET.MerchantSettings'}}</span>
+          </h3>
+          <div>
+            <div class="flexrow">
+              <select
+                class="sheet-rolltable"
+                id="lootsheet-rolltable"
+                name="system.flags.lootsheet-simple.rolltable"
+              >
+                <!-- Placeholder option -->
+                <option value="" disabled>{{localize 'LOOTSHEET.RollableTable'}}</option>
+
+                <!-- Loop through rolltables -->
+                {{#each rolltables as |table|}}
+                <option value="{{
+                  table.name
+                }}"
+                {{#if (eq table.name ../selectedRollTable)}}selected{{/if}}>
+                {{
+                  table.name
+                }}
+
+                {{/each}}
+              </select>
+            </div>
+            <div class="flexrow">
+              <input name="system.flags.lootsheet-simple.shopQty" type="text" data-dtype="String"
+              placeholder="{{localize "LOOTSHEET.ShopFormula"}} e.g. 1d20" value="{{ shopQty }}" />
+            </div>
+            <div class="flexrow">
+              <input name="system.flags.lootsheet-simple.itemQty" type="text" data-dtype="String"
+              placeholder="{{localize "LOOTSHEET.ItemFormula"}} e.g. 1d4" value="{{ itemQty }}" />
+            </div>
+            <div class="flexrow">
+              <input name="system.flags.lootsheet-simple.itemQtyLimit" type="text"
+              data-dtype="String" placeholder="{{localize "LOOTSHEET.LimitQty"}} e.g. 10" value="{{
+                itemQtyLimit
+              }}" />
+            </div>
+
+            <div class="flexrow" style="margin-top: 0.5rem; margin-bottom: 0.5rem">
+              <label
+                class="clear-inventory slide-toggle"
+                name="system.flags.lootsheet-simple.clearInventory"
+              >
+                <input
+                  type="checkbox"
+                  name="system.flags.lootsheet-simple.clearInventory"
+                  {{
+                  checked
+                  clearInventory
+                  }}
+                />
+                {{#if clearInventory}}
+                {{localize "LOOTSHEET.ClearInventory"}}
+                <i class="fas fa-toggle-on"></i>
+                {{else}}
+                {{localize "LOOTSHEET.ClearInventory"}}
+                <i class="fas fa-toggle-off"></i>
+                {{/if}}
+              </label>
+            </div>
+          </div>
+
+          <div class="flexrow">
+            <button
+              type="button"
+              class="update-inventory"
+              type="update-inventory"
+              name="update-inventory"
+              id="update-inventory"
+              disabled
+            >
+              <i class="fas fa-balance-scale"></i> {{localize "LOOTSHEET.UpdateShop"}}
+            </button>
+          </div>
+        </div>
+      </div>
+      {{/if}}
+
+      <section class="tab-body">
+        <div
+          class="tab inventory active {{@root.editable}}"
+          data-group="primary"
+          data-tab="features"
+        >
+          <dnd5e-inventory class="inventory-element" v2="">
+            {{#if @root.editable}}
+            <section class="currency {{@root.editable}}">
+              <button
+                type="button"
+                class="item-action unbutton"
+                data-action="currency"
+                data-tooltip="DND5E.CurrencyManager.Title"
+                aria-label="Manage Currency"
+              >
+                <i class="fas fa-coins"></i>
+              </button>
+
+              {{#each system.currency}}
+              <label aria-label="{{ lookup (lookup @root.config.currencies @key) 'label' }}">
+                <i
+                  class="currency {{ @key }}"
+                  data-tooltip="{{ lookup (lookup @root.config.currencies @key) 'label' }}"
+                ></i>
+                <input
+                  type="text"
+                  class="currency uninput"
+                  name="system.currency.{{ @key }}"
+                  value="{{ this }}"
+                  data-dtype="Number"
+                  inputmode="numeric"
+                  pattern="[0-9+=\-]*"
+                />
+              </label>
+              {{/each}}
+            </section>
+            {{/if}}
+
+            <div class="middle {{@root.editable}}">
+              {{!-- Searching & Filtering --}}
+              <item-list-controls
+                for="inventory"
+                label="{{ localize 'DND5E.InventorySearch' }}"
+                sort="toggle"
+                collection="items"
+              >
+              </item-list-controls>
+            </div>
+
+            {{!-- Inventory List --}}
+            <section class="items-list inventory-list" data-item-list="inventory">
+              {{!-- Sections / Categories --}}
+              {{#each inventory as |
+              section |}}
+              <div class="items-section card" {{ dnd5e-dataset dataset }}>
+                {{!-- Section Header --}}
+                <div class="items-header header">
+                  <h3 class="item-name">{{ localize section.label }}</h3>
+
+                  <div class="item-header item-weight">
+                    {{ localize "DND5E.Weight" }}
+                  </div>
+                  <div class="item-header item-quantity">
+                    {{ localize "DND5E.Quantity" }}
+                  </div>
+                  <div class="item-header item-price">
+                    {{ localize "DND5E.Price" }}
+                  </div>
+
+                  <div class="item-header item-controls"></div>
+                </div>
+
+                {{!-- Section Contents --}}
+                <ol class="item-list unlist">
+                  {{#each items as |item|}}
+                  {{#dnd5e-itemContext item as |ctx|}}
+
+                  {{!-- Items --}}
+                  <li
+                    class="item collapsible {{#unless ctx.isExpanded}}collapsed{{/unless}}"
+                    data-item-id="{{ item.id }}"
+                    data-entry-id="{{ item.id }}"
+                    data-item-name="{{ item.name }}"
+                    data-item-sort="{{ item.sort }}"
+                    data-ungrouped="all"
+                    data-grouped="{{ item.type }}"
+                  >
+                    <div class="item-row">
+                      {{!-- Item Name --}}
+                      <div
+                        class="item-name item-action item-tooltip {{ @root.rollableClass }}"
+                        {{#if ../../isGM}}role="button"
+                        data-action="edit"{{/if}}
+                        aria-label="{{ item.name }}"
+                      >
+                        <img
+                          class="item-image gold-icon"
+                          src="{{ item.img }}"
+                          alt="{{ item.name }}"
+                        />
+                        <div class="name name-stacked">
+                          <span class="title">{{ item.name }}</span>
+                          {{#if ctx.subtitle}}
+                          <span class="subtitle">{{{ ctx.subtitle }}}</span>
+                          {{/if}}
+                        </div>
+                      </div>
+
+                      {{!-- Item Weight --}}
+                      <div
+                        class="item-detail item-weight {{#unless item.system.weight}}empty{{/unless}}"
+                      >
+                        {{#if item.system.weight}}
+                        <i class="fas fa-weight-hanging"></i> {{ item.system.weight.value }} {{/if}}
+                      </div>
+
+                      {{!-- Item Quantity --}}
+                      <div class="item-detail item-quantity">                        
+                        {{#if ../../isGM}}
+                        {{#notequal item.type "container"}}                        
+                        <a
+                          class="adjustment-button"
+                          data-action="decrease"
+                          data-property="system.quantity"
+                        >
+                          <i class="fas fa-minus"></i>
+                        </a>
+                        {{/notequal}} 
+                        {{#notequal item.type "container"}}
+                        <input
+                          type="text"
+                          value="{{ item.system.quantity }}"
+                          placeholder="0"
+                          data-dtype="Number"
+                          data-name="system.quantity"
+                          inputmode="numeric"
+                          pattern="[0-9+=\-]*"
+                          min="0"
+                        />
+                        {{else}}
+                        <div class="item-detail">{{ item.system.quantity }}</div>
+                        {{/notequal}}
+                        {{#notequal item.type "container"}}
+                        <a
+                          class="adjustment-button"
+                          data-action="increase"
+                          data-property="system.quantity"
+                        >
+                          <i class="fas fa-plus"></i>
+                        </a>
+                        {{/notequal}}                        
+                        {{^}}
+                            <div class="item-detail">{{ item.system.quantity }}</div>
+                        {{/if}}
+
+                      </div>
+
+                      {{!-- Item Price --}}
+                      <div
+                        class="item-detail item-price {{#unless item.system.price.value}}empty{{/unless}}"
+                      >
+                        {{#if item.system.price.value}}
+                        {{ lootsheetprice item.system.price.value ../../priceModifier }}
+                        <i class="currency {{ item.system.price.denomination }}"></i>
+                        {{/if}}
+                      </div>
+
+                      {{!-- Item Status --}}
+                      <div class="item-detail item-controls">
+                        {{#if @root.editable}}
+                        {{!-- Editing --}}
+                        <a
+                          class="item-control item-action"
+                          data-action="edit"
+                          data-tooltip="DND5E.ItemEdit"
+                          aria-label="{{ localize 'DND5E.ItemEdit' }}"
+                        >
+                          <i class="fas fa-pen-to-square"></i>
+                        </a>
+
+                        {{!-- Deleting --}}
+                        <a
+                          class="item-control item-action"
+                          data-action="delete"
+                          data-tooltip="DND5E.ItemDelete"
+                          aria-label="{{ localize 'DND5E.ItemDelete' }}"
+                        >
+                          <i class="fas fa-trash"></i>
+                        </a>
+                        {{/if}}
+
+                        {{!-- Expand/Collapse --}}
+                        <a
+                          class="item-control interface-only"
+                          data-toggle-description
+                          aria-label="{{ localize 'DND5E.ToggleDescription' }}"
+                        >
+                          {{#if ctx.isExpanded}}
+                          <i class="fas fa-compress"></i>
+                          {{else}}
+                          <i class="fas fa-expand"></i>
+                          {{/if}}
+                        </a>
+
+                        {{#ifnot @root.editable}}
+                        <a
+                          class="item-control item-buy item-action"
+                          title="Acheter"
+                          ><i class="fas fa-shopping-cart"></i
+                        ></a>                        
+                        {{/ifnot}}
+
+                        {{!-- Context Menu --}}
+                        {{#if ../../isGM}}
+                        <a
+                          class="item-control interface-only"
+                          data-context-menu
+                          aria-label="{{ localize 'DND5E.AdditionalControls' }}"
+                        >
+                          <i class="fas fa-ellipsis-vertical"></i>
+                        </a>
+                        {{/if}}
+                      </div>
+                    </div>
+
+                    <div class="item-description collapsible-content">
+                      <div class="wrapper">
+                        {{#if ctx.isExpanded}}
+                        {{> "dnd5e.item-summary" ctx.expanded }}
+                        {{/if}}
+                      </div>
+                    </div>
+                  </li>
+                  {{/dnd5e-itemContext}}
+                  {{/each}}
+                </ol>
+              </div>
+              {{/each}}
+            </section>
+
+            <div class="bottom">              
+              {{!-- Encumbrance --}}
+              <div class="encumbrance">
+                <section class="currency" style="display: flex; flex-direction: row; align-items: center; padding: 0.7ex 1em 0.7ex 1em;">
+                    <strong style="display: block;">Votre argent : </strong>
+                    {{#each buyerFunds}}
+                    <strong style="display: block; padding-left: 1em;">{{ this }}</strong>
+                    <i
+                    class="currency {{ @key }}" style="display: block;"
+                    data-tooltip="{{ lookup (lookup @root.config.currencies @key) 'label' }}"
+                    ></i>
+                    {{/each}}
+                </section>
+              </div>              
+
+              {{!-- Child Creation --}}
+              {{#if isGM}}
+              <button
+                type="button"
+                class="create-child gold-button"
+                aria-label="{{ 'SIDEBAR.Create' type=(localize 'DOCUMENT.Item') }}"
+              >
+                <i class="fas fa-plus"></i>
+              </button>
+              {{/if}}
+            </div>
+          </dnd5e-inventory>
+        </div>
+
+        <div class="tab biography {{@root.editable}}" data-group="primary" data-tab="biography">
+          {{#if editingDescriptionTarget}}
+
+          {{ editor enriched.editing target=editingDescriptionTarget button=false editable=true engine="prosemirror"
+                      collaborate=true }}
+
+          {{else}}
+
+          {{!-- Public Information --}}
+          <div class="middle" data-target="system.details.biography.public">
+            <h3 class="icon">
+              {{#if @root.owner}}
+              <a
+                class="editor-edit"
+                data-action="editDescription"
+                aria-label="{{ localize 'DND5E.BiographyPublicEdit' }}"
+              >
+                <i class="fas fa-feather"></i>
+              </a>
+              <dnd5e-icon src="systems/dnd5e/icons/svg/ink-pot.svg"></dnd5e-icon>
+              {{/if}}
+              <span class="roboto-upper">{{ localize "DND5E.Public" }}</span>
+            </h3>
+
+            <div class="editor">
+              <div class="editor-content">{{{ enriched.public }}}</div>
+            </div>
+          </div>
+
+          {{!-- Details --}}
+          <div class="bottom" data-target="system.details.biography.value">
+            <h3 class="icon">
+              {{#if @root.owner}}
+              <a
+                class="editor-edit"
+                data-action="editDescription"
+                aria-label="{{ localize 'DND5E.DetailsEdit' }}"
+              >
+                <i class="fas fa-feather"></i>
+              </a>
+              <dnd5e-icon src="systems/dnd5e/icons/svg/ink-pot.svg"></dnd5e-icon>
+              {{/if}}
+              <span class="roboto-upper">{{ localize "DND5E.Details" }}</span>
+            </h3>
+
+            <div class="editor">
+              <div class="editor-content">{{{ enriched.value }}}</div>
+            </div>
+          </div>
+
+          {{/if}}
+        </div>
+      </section>
+    </div>
+  </section>
+</form>

@@ -23,3 +23,7 @@
 .configure-sheet {
     display: none !important;
 }
+
+.dtjul-merchant .mode-slider {
+    display: none !important;
+}

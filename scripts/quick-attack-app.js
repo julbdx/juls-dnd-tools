@@ -640,7 +640,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
             speaker: ChatMessage.getSpeaker({ token: this.targetToken.document }),
             content: chatContent,        
         };
-        ChatMessage.create(chatData);      
+        ChatMessage.create(chatData);
         
         // On avance l'initiative et on ferme la fenêtre
         const combat = game.combat;

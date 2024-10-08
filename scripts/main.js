@@ -2,6 +2,7 @@ import constants from "../Constants.js";
 import { registerSettings } from "./settings.js";
 import { QuickAttackApp } from './quick-attack-app.js';
 import { QuickDamageApp } from './quick-damage-app.js';
+import { JulMerchantSheet } from './merchant-sheet.js';
 
 /*
 Midi QOL :
@@ -357,6 +358,9 @@ Hooks.once("init", () => {
    CONFIG.Dice.rolls.push(CustomJulDamageRoll);
 
    console.info('Dice replaced !');
+
+   // Fiche de marchand
+   Actors.registerSheet("dnd5e", JulMerchantSheet, { types: ["npc"], makeDefault: false });
 });
 
 Hooks.once("ready", () => {
