@@ -1,0 +1,25 @@
+/* désactivation de certaines partie de la fiche */
+.dnd5e2 .tab-inventory .create-child {
+    display: none !important;
+    pointer-events: none !important;
+}
+
+.dnd5e2 .tab-inventory .currency > * {    
+    pointer-events: none !important;
+}
+
+.dnd5e2 .tab-inventory .item-quantity > *,
+.dnd5e2 .tab-inventory .item-uses > *
+ {
+    pointer-events: none !important;
+    opacity: 0.6;
+}
+
+.dnd5e2.item .mode-slider
+{
+    display: none !important;
+}
+
+.configure-sheet {
+    display: none !important;
+}

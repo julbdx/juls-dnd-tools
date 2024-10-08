@@ -372,6 +372,14 @@ Hooks.once("ready", () => {
          }
       });
    }
+   else
+   {
+      // On grise certaines parties de la fiche de personnage
+      const linkElement = document.createElement("link");
+      linkElement.rel = "stylesheet";
+      linkElement.href = "modules/juls-dnd-tools/assets/players.css"; // Chemin vers le fichier CSS
+      document.head.appendChild(linkElement);
+   }
    
    game.socket.on(socketName, (data) => { 
       switch (data ?? 'close')
