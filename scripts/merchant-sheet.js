@@ -148,7 +148,7 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
         
       // console.log("sheetdata", sheetData);
       //console.log("this actor", this.actor);
-      sheetData.myPortrait = this.token.texture.src;
+      sheetData.myPortrait = this.token?.texture?.src ?? this.actor.prototypeToken.texture?.src;
   
       // Return data for rendering
       return sheetData;
