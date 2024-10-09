@@ -397,9 +397,14 @@
 
             <div class="bottom">              
               {{!-- Encumbrance --}}
-              <div class="encumbrance">
-                <section class="currency" style="display: flex; flex-direction: row; align-items: center; padding: 0.7ex 1em 0.7ex 1em;">
-                    <strong style="display: block;">Votre argent : </strong>
+              {{#if buyer}}
+              <div class="encumbrance" style="background: var(--dnd5e-color-parchment); ">
+                <div class="buyer_portrait">
+                  <img src="{{ buyer.img }}" alt="{{ buyer.name }}" width="48" height="48"/>
+                </div>
+                <section class="currency" style="display: flex; flex-direction: row; align-items: center; padding: 0.7ex 1em 0.7ex 1em; margin-left: 48px;">
+                    <strong style="display: block;">{{ buyer.name }}</strong>
+                    <div style="display: block;">— votre argent : </div>
                     {{#each buyerFunds}}
                     <strong style="display: block; padding-left: 1em;">{{ this }}</strong>
                     <i
@@ -408,17 +413,7 @@
                     ></i>
                     {{/each}}
                 </section>
-              </div>              
-
-              {{!-- Child Creation --}}
-              {{#if isGM}}
-              <button
-                type="button"
-                class="create-child gold-button"
-                aria-label="{{ 'SIDEBAR.Create' type=(localize 'DOCUMENT.Item') }}"
-              >
-                <i class="fas fa-plus"></i>
-              </button>
+              </div>
               {{/if}}
             </div>
           </dnd5e-inventory>

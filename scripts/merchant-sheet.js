@@ -141,13 +141,11 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
         sheetData.system.currency,
       );
 
-      
+      sheetData.buyer = game.user.character;
       sheetData.buyerFunds = JulMerchantSheet.convertCurrencyFromObject(
         game.user.character?.system.currency ?? [],
       );
         
-      // console.log("sheetdata", sheetData);
-      //console.log("this actor", this.actor);
       sheetData.myPortrait = this.token?.texture?.src ?? this.actor.prototypeToken.texture?.src;
   
       // Return data for rendering
@@ -241,10 +239,18 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
       // Si ce n'est pas le maître du jeu, on désactive le drop du drag&drop
       if (true || !game.user.isGM) {        
         html.find('.item-list').on('drop', (event) => {
-          event.preventDefault(); // Empêcher l'opération de drop
-          ui.notifications.warn("Vous ne pouvez pas vendre d'article à ce marchand pour l'instant."); // Message d'avertissement
+          //ui.notifications.warn("Vous ne pouvez pas vendre d'article à ce marchand pour l'instant."); // Message d'avertissement
+          // récupérons l'item drag&droppé 
+          this._sellItem(event);
           return false;
-      });
+        });
+
+        html.find('.inventory-element').on('drop', (event) => {
+          //ui.notifications.warn("Vous ne pouvez pas vendre d'article à ce marchand pour l'instant."); // Message d'avertissement
+          // récupérons l'item drag&droppé 
+          this._sellItem(event);
+          return false;
+        });
       } 
     }
   
@@ -494,6 +500,57 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
   
       return
     }
+
+    /**
+     * Handle sell item
+     * @param {*} event 
+     * @param {*} all 
+     */
+    async _sellItem(event, all = 0) {
+      event.preventDefault();
+  
+      if (this.token === null) {
+        return ui.notifications.error(`You must sell items to a token.`);
+      }
+  
+      if (!game.user.character) {
+        // console.log("Loot Sheet | No active character for user");
+        return ui.notifications.error(`No active character for user.`);
+      }
+      // event est un DropEvent, on va chercher la donnée qu'il transporte
+      let data = JSON.parse(event.originalEvent.dataTransfer.getData('text/plain'));
+      if (!data) return;
+      
+      // On cherche l'item par son UUID
+      let item = await Item.implementation.fromDropData(data);      
+     
+      const sellerModifier = 0.5;  // Rachat à moitié de la valeur ?
+      const price = (item.system.price.value * sellerModifier * 100) / 100;
+      const itemCostDenomination = item.system.price.denomination;
+
+      const proceed = await foundry.applications.api.DialogV2.confirm({
+        title: `Vendre un objet à ${this.token.name}`,
+        content: `<p>Vous allez vendre 1x ${item.name} pour ${price}${itemCostDenomination} à ${this.token.name}.</p>`,
+        modal: true,
+        rejectClose: false,
+      });
+
+      if (proceed) {
+        const data = {
+          tokenId: this.token.id,
+          sellerId: item.parent.id,
+          itemId: item.id,
+          quantity: 1,
+        }
+
+        let seller = game.actors.get(data.sellerId);
+        let buyer = canvas.tokens.get(data.tokenId)?.actor;
+
+        if (buyer && seller) {
+          this.transaction(seller, buyer, data.itemId, data.quantity, sellerModifier);
+        }
+      }      
+    }
   
     /* -------------------------------------------- */
   
@@ -515,13 +572,7 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
       }
   
       const itemId = $(event.currentTarget).parents('.item').attr('data-item-id')
-      const targetItem = this.actor.getEmbeddedDocument('Item', itemId)
-  
-      const item = {
-        itemId: itemId,
-        quantity: 1,
-      }
-  
+        
       const data = {
         buyerId: game.user.character._id,
         tokenId: this.token.id,
@@ -531,10 +582,13 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
 
       /** gestion de la vente ici ! */
       let buyer = game.actors.get(data.buyerId);
-      let seller = canvas.tokens.get(data.tokenId);
+      let seller = canvas.tokens.get(data.tokenId)?.actor;
 
-      if (buyer && seller && seller.actor)
-          this.transaction(seller.actor, buyer, data.itemId, data.quantity);  
+      if (buyer && seller)
+      {
+          let sellerModifier = seller.getFlag(JulMerchantSheet.FLAG, 'priceModifier');
+          this.transaction(seller, buyer, data.itemId, data.quantity, sellerModifier);  
+      }
     }
 
     /**
@@ -546,12 +600,12 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
      * @param {*} quantity 
      * @returns 
      */
-    async transaction(seller, buyer, itemId, quantity) {
-      let sellItem = seller.getEmbeddedDocument('Item', itemId)
+    async transaction(seller, buyer, itemId, quantity, sellerModifier) {
+      let sellItem = seller.getEmbeddedDocument('Item', itemId);
   
       // If the buyer attempts to buy more then what's in stock, buy all the stock.
       if (sellItem.system.quantity < quantity) {
-        quantity = sellItem.system.quantity
+        quantity = sellItem.system.quantity;
       }
   
       // On negative quantity we show an error
@@ -563,27 +617,26 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
       // On 0 quantity skip everything to avoid error down the line
       if (quantity == 0) {
         ui.notifications.warn("Pas assez de stock pour acheter."); // Message d'avertissement
-        return
+        return;
       }
+      
+      if (!sellerModifier || typeof sellerModifier !== 'number') sellerModifier = 1.0;
   
-      let sellerModifier = seller.getFlag(JulMerchantSheet.FLAG, 'priceModifier')
-      if (typeof sellerModifier !== 'number') sellerModifier = 1.0
+      let itemCostRaw = Math.round(sellItem.system.price.value * sellerModifier * 100) / 100;
+      let itemCostDenomination = sellItem.system.price.denomination;
   
-      let itemCostRaw = Math.round(sellItem.system.price.value * sellerModifier * 100) / 100
-      let itemCostDenomination = sellItem.system.price.denomination
-  
-      itemCostRaw *= quantity
+      itemCostRaw *= quantity;
   
       // console.log("itemCostRaw", itemCostRaw);
       // console.log("itemCostDenomination", itemCostDenomination);
   
       let buyerFunds = foundry.utils.duplicate(
         JulMerchantSheet.convertCurrencyFromObject(buyer.system.currency),
-      )
+      );
   
       let sellerFunds = foundry.utils.duplicate(
         JulMerchantSheet.convertCurrencyFromObject(seller.system.currency),
-      )
+      );
   
       // console.log("sellerFunds before", sellerFunds);
       // console.log("buyerFunds before purchase", buyerFunds);
@@ -620,7 +673,7 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
   
       // console.log(`buyerFundsAsPlatinum : ${buyerFundsAsPlatinum}`);
       if (itemCostInBronze >= buyerFundsAsBronze) {
-        ui.notifications.warn("Vous n'avez pas suffisamment d'argent pour acheter cette marchandise."); // Message d'avertissement
+        ui.notifications.warn("Pas assez de fonds pour acheter cette marchandise."); // Message d'avertissement
         return
       }
       //maybe realize later
@@ -750,7 +803,7 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
         );
 
         // On envoie un message à l'acheteur
-        ui.notifications.info(`Vous avez acheté ${quantity} x ${m.item.name} pour ${itemCostRaw}${itemCostDenomination}.`);
+        ui.notifications.info(`${buyer.name} a acheté ${quantity} x ${m.item.name} pour ${itemCostRaw}${itemCostDenomination}.`);
       }
     }
 

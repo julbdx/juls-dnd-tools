@@ -424,3 +424,15 @@ overflow: hidden !important;
   padding: 0;
   color: whitesmoke;  
 }
+
+.dtjul-merchant .buyer_portrait {
+  position: absolute;
+  top: -12px;
+}
+
+.dtjul-merchant .buyer_portrait img {
+  border-radius: 50%;
+  background: #444;
+  box-shadow: 0 0 6px var(--dnd5e-shadow-45);
+  border: var(--dnd5e-border-gold);
+}

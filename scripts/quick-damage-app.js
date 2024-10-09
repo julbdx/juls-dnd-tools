@@ -191,7 +191,7 @@ export class QuickDamageApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
         // râté ?
         const legendaryResistances = (token.actor.system.resources?.legres?.value || 0);
-        console.log(legendaryResistances);
+        
         if (legendaryResistances > 0) {
             const proceed = await foundry.applications.api.DialogV2.confirm({
                                 title: `Résistance légendaire`,
