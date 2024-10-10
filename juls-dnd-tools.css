@@ -318,6 +318,31 @@ overflow: hidden !important;
     text-align: center;
   }
 
+  .dtjul-quick-attack-app table {
+    margin: 1ex 0 1ex 0;
+  }
+
+  .dtjul-quick-attack-app .two-columns {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .dtjul-quick-attack-app .icon {
+    min-width: 32px;
+    min-height: 32px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .dtjul-quick-attack-app .big-icon {
+    min-width: 48px;
+    min-height: 48px;
+    width: 48px;
+    height: 48px;
+  }
+
   .dtjul-quick-attack-app .canceled {
     opacity: 0.7;
     /* stroke text */

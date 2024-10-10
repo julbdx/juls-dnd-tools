@@ -1,154 +1,171 @@
 <div>
     <!-- des radio de -5 à +5 -->
-    <div class="header">        
-        <div class="portrait">
-            <img src="{{attacker.document.texture.src}}" width="48" height="48" />
-        </div>
-        <div class="bonus header">
-            <button data-action="changeBonusAction" data-mode="-1">-</button>
-            <strong style="white-space: nowrap;">{{# if bonus}}Modificateur : {{bonusStr}}{{^}}Aucun bonus{{/if}}</strong>
-            <button data-action="changeBonusAction" data-mode="1">+</button>
-        </div>
-        <div class="portrait">
-            <img src="{{target.document.texture.src}}" width="48" height="48" />
-        </div>        
-    </div>
-
-    <table style="width:98%;">
-        {{#each attacks}}
-        <tr>
-            <td><img src="{{this.item.img}}" width="48" height="48" /></td>
-            <td>
-                <a data-action="itemInfoAction" data-item="{{this.item.id}}">{{this.item.name}}</a>
-            </td>
-            <td>{{this.item.labels.range}}</td>
-            <td>+{{this.item.labels.modifier}} {{../bonusStr}}</td>
-            <td>
-                {{#each this.item.labels.damages}}
-                {{this.label}} <br>
-                {{/each}}
-            </td>
-            <td>
-                <div style="display: flex; flex-direction: row;">
-                    <button data-action="rollAction" data-mode="1" data-weapon="{{this.item.id}}">adv.</button>
-                    <button data-action="rollAction" data-mode="0" data-weapon="{{this.item.id}}">normal</button>
-                    <button data-action="rollAction" data-mode="-1" data-weapon="{{this.item.id}}">dis.</button>
-                </div>
-            </td>
-        </tr>
-        {{/each}}
-    </table>
-    <div class="results">
-        <div class="attacks">
-            <h2>Attaques</h2>
-            <div class="dtjul-attack-results">
-                {{#each attackResults}}
-                <div class="dtjul-dice-card {{#if this.active}}{{#if this.success}}success{{^}}failed{{/if}}{{^}}dtjul-disabled{{/if}}">            
-                    <div class="weapon">{{this.weapon.name}}</div>
-                    <div class="dice-result">
-                        <div class="dtjul-dice-total">
-                            <div class="dice-tooltip">
-                                <div class="dice-rolls">
-                                    <div class="roll die d20"><a data-action="removeDiceAction" data-attack="{{this.idx}}">-</a></div>
-                                </div>
-                            </div>
-                            <div>
-                                <a data-action="toggleActiveAction" data-attack="{{this.idx}}">{{this.roll.result}}</a>
-                            </div>
-                            <div class="dice-tooltip">
-                                <div class="dice-rolls">
-                                    <div class="roll die d20"><a data-action="addDiceAction" data-attack="{{this.idx}}">+</a></div>
-                                </div>
-                            </div>
-                        </div>                
-                        <div class="dice-tooltip">
-                            <ol class="dice-rolls">
-                            {{#each this.rolls}}
-                            <li class="roll die d20 {{this.type}}"><a data-action="toggleAdvAction" data-attack="{{../idx}}">{{this.die}}</a></li>
-                            {{/each}}                    
-                            </ol>
-                        </div>                
-                    </div>      
-                    <span class="damage">{{#if this.totalDamage}}( {{this.totalDamage}} ){{^}}—{{/if}}</span>
-                </div>
-                {{/each}}
-            </div>
-        </div>
-        <div class="target">
-            <h2>Cible</h2>
-            <table>                
-                {{#each damages}}
+    <div class="two-columns">
+        <div class="features" style="max-width: 30%;">
+            <table>
+            {{#each features}}
                 <tr>
-                    <td><img src="{{this.img}}" width="24" height="24" /></td>
-                    <td>
-                        {{this.nb}}x {{this.label}}
-                        &nbsp;
-                        {{#if this.normal}}
-                        <a class="change" data-action="changeDamageAction" data-damage="{{this.id}}" data-mode="1"><i class="far fa-life-ring"></i></a>
-                        {{/if}}
-                        {{#if this.full}}
-                        <a class="change" data-action="changeDamageAction" data-damage="{{this.id}}" data-mode="2"><i class="far fa-shield"></i></a>
-                        {{/if}}
-                        {{#if this.resistance}}
-                        <a class="change" data-action="changeDamageAction" data-damage="{{this.id}}" data-mode="3"><i class="fas fa-shield-alt"></i></a>
-                        {{/if}}
-                        {{#if this.immunity}}
-                        <a class="change" data-action="changeDamageAction" data-damage="{{this.id}}" data-mode="0"><i class="fas fa-shield"></i></a>
-                        {{/if}}                        
+                    <td style="vertical-align: top;"><img class="icon gold-icon" src="{{this.img}}" alt="{{this.name}}"/></td>
+                    <td style="vertical-align: top; font-size: 90%;">
+                        <strong>{{this.name}}</strong>
+                        {{{this.description}}}
                     </td>
-                    <td class="value">
-                        <span style="white-space: nowrap;">
-                            {{#if this.reduced}}<span class="canceled">{{this.total}}</span>{{/if}}
-                            {{#if this.reduced}}<span class="canceled-motif">({{this.reduced}})</span>{{/if}}
-                            <br>
-                        </span>
-                        {{this.take}}
+                </tr>
+            {{/each}}
+            </table>
+        </div>
+        <div class="attcks" style="flex-grow: 1;">
+            <div class="header">        
+                <div class="portrait">
+                    <img class="gold-icon" src="{{attacker.document.texture.src}}" width="48" height="48" />
+                </div>
+                <div class="bonus header">
+                    <button data-action="changeBonusAction" data-mode="-1">-</button>
+                    <strong style="white-space: nowrap;">{{# if bonus}}Modificateur : {{bonusStr}}{{^}}Aucun bonus{{/if}}</strong>
+                    <button data-action="changeBonusAction" data-mode="1">+</button>
+                </div>
+                <div class="portrait">
+                    <img class="gold-icon" src="{{target.document.texture.src}}" width="48" height="48" />
+                </div>        
+            </div>
+
+            <table>
+                {{#each attacks}}
+                <tr>
+                    <td><img class="big-icon gold-icon" src="{{this.item.img}}" /></td>
+                    <td>
+                        <a data-action="itemInfoAction" data-item="{{this.item.id}}">{{this.item.name}}</a>
+                    </td>
+                    <td>{{this.item.labels.range}}</td>
+                    <td>+{{this.item.labels.modifier}} {{../bonusStr}}</td>
+                    <td>
+                        {{#each this.item.labels.damages}}
+                        {{this.label}} <br>
+                        {{/each}}
+                    </td>
+                    <td>
+                        <div style="display: flex; flex-direction: row;">
+                            <button data-action="rollAction" data-mode="1" data-weapon="{{this.item.id}}">adv.</button>
+                            <button data-action="rollAction" data-mode="0" data-weapon="{{this.item.id}}">normal</button>
+                            <button data-action="rollAction" data-mode="-1" data-weapon="{{this.item.id}}">dis.</button>
+                        </div>
                     </td>
                 </tr>
                 {{/each}}
             </table>
-            <table class="sum">
-                <tr>
-                    <td style="width: 100%;"></td>
-                    <td>
-                        CA
-                        <a class="change" data-action="changeACAction" data-mode="0">(*)</a> 
-                    </td>
-                    <td class="value">
-                        <a class="change" data-action="changeACAction" data-mode="-1">(-)</a> 
-                        {{targetAC}}
-                        <a class="change" data-action="changeACAction" data-mode="1">(+)</a> 
-                    </td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td>HP</td>
-                    <td style="color: darkgreen;">{{currentHP}}</td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td><strong>Total&nbsp;dégâts</strong></td>
-                    <td><strong>{{totalDamage}}</strong></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td>
-                        {{#if totalDamage}}
-                        <button data-action="applyDamageAction">&nbsp;Appliquer&nbsp;→&nbsp;</button>
-                        {{^}}
-                        Après
-                        {{/if}}
-                    </td>
-                    <td style="color: {{projectionColor}}">{{projectionHP}}</td>
-                </tr>
-                {{#each concentrationChecks}}
-                <tr>
-                    <td></td>
-                    <td class="value">Concentration {{this.source}} ({{this.damage}})</td>
-                    <td>DD&nbsp;{{this.dd}}</td>
-                </tr>
-                {{/each}}
-            </table>            
+            <div class="results">
+                <div class="attacks">
+                    <h2>Attaques</h2>
+                    <div class="dtjul-attack-results">
+                        {{#each attackResults}}
+                        <div class="dtjul-dice-card {{#if this.active}}{{#if this.success}}success{{^}}failed{{/if}}{{^}}dtjul-disabled{{/if}}">            
+                            <div class="weapon">{{this.weapon.name}}</div>
+                            <div class="dice-result">
+                                <div class="dtjul-dice-total">
+                                    <div class="dice-tooltip">
+                                        <div class="dice-rolls">
+                                            <div class="roll die d20"><a data-action="removeDiceAction" data-attack="{{this.idx}}">-</a></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <a data-action="toggleActiveAction" data-attack="{{this.idx}}">{{this.roll.result}}</a>
+                                    </div>
+                                    <div class="dice-tooltip">
+                                        <div class="dice-rolls">
+                                            <div class="roll die d20"><a data-action="addDiceAction" data-attack="{{this.idx}}">+</a></div>
+                                        </div>
+                                    </div>
+                                </div>                
+                                <div class="dice-tooltip">
+                                    <ol class="dice-rolls">
+                                    {{#each this.rolls}}
+                                    <li class="roll die d20 {{this.type}}"><a data-action="toggleAdvAction" data-attack="{{../idx}}">{{this.die}}</a></li>
+                                    {{/each}}                    
+                                    </ol>
+                                </div>                
+                            </div>      
+                            <span class="damage">{{#if this.totalDamage}}( {{this.totalDamage}} ){{^}}—{{/if}}</span>
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+                <div class="target">
+                    <h2>Cible</h2>
+                    <table>                
+                        {{#each damages}}
+                        <tr>
+                            <td><img src="{{this.img}}" width="24" height="24" /></td>
+                            <td>
+                                {{this.nb}}x {{this.label}}
+                                &nbsp;
+                                {{#if this.normal}}
+                                <a class="change" data-action="changeDamageAction" data-damage="{{this.id}}" data-mode="1"><i class="far fa-life-ring"></i></a>
+                                {{/if}}
+                                {{#if this.full}}
+                                <a class="change" data-action="changeDamageAction" data-damage="{{this.id}}" data-mode="2"><i class="far fa-shield"></i></a>
+                                {{/if}}
+                                {{#if this.resistance}}
+                                <a class="change" data-action="changeDamageAction" data-damage="{{this.id}}" data-mode="3"><i class="fas fa-shield-alt"></i></a>
+                                {{/if}}
+                                {{#if this.immunity}}
+                                <a class="change" data-action="changeDamageAction" data-damage="{{this.id}}" data-mode="0"><i class="fas fa-shield"></i></a>
+                                {{/if}}                        
+                            </td>
+                            <td class="value">
+                                <span style="white-space: nowrap;">
+                                    {{#if this.reduced}}<span class="canceled">{{this.total}}</span>{{/if}}
+                                    {{#if this.reduced}}<span class="canceled-motif">({{this.reduced}})</span>{{/if}}
+                                    <br>
+                                </span>
+                                {{this.take}}
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </table>
+                    <table class="sum">
+                        <tr>
+                            <td style="width: 100%;"></td>
+                            <td>
+                                CA
+                                <a class="change" data-action="changeACAction" data-mode="0">(*)</a> 
+                            </td>
+                            <td class="value">
+                                <a class="change" data-action="changeACAction" data-mode="-1">(-)</a> 
+                                {{targetAC}}
+                                <a class="change" data-action="changeACAction" data-mode="1">(+)</a> 
+                            </td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>HP</td>
+                            <td style="color: forestgreen;">{{currentHP}}</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td><strong>Total&nbsp;dégâts</strong></td>
+                            <td><strong>{{totalDamage}}</strong></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>
+                                {{#if totalDamage}}
+                                <button data-action="applyDamageAction">&nbsp;Appliquer&nbsp;→&nbsp;</button>
+                                {{^}}
+                                Après
+                                {{/if}}
+                            </td>
+                            <td style="color: {{projectionColor}};">{{projectionHP}}</td>
+                        </tr>
+                        {{#each concentrationChecks}}
+                        <tr>
+                            <td></td>
+                            <td class="value">Concentration {{this.source}} ({{this.damage}})</td>
+                            <td>DD&nbsp;{{this.dd}}</td>
+                        </tr>
+                        {{/each}}
+                    </table>            
+                </div>
+            </div>
         </div>
     </div>
 </div>

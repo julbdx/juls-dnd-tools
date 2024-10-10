@@ -7,7 +7,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
         classes: ["dnd5e2", "dtjul-window", "dtjul-quick-attack-app"],
         tag: "div",
         position: {
-            width: 800,
+            width: 900,
             height: "auto",        
         },
         window: {
@@ -52,6 +52,29 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.damages = [];
         this.concentrationChecks = [];
         this.bonus = 0;
+        this.features = [];
+
+        // On récupère les features de l'attaquant
+        console.log(this.attackerToken.actor.collections);
+        if (this.attackerToken.actor?.collections?.items)
+        {            
+            this.attackerToken.actor.collections.items.forEach(async f => {                
+                if (f.type == "feat")
+                {
+                    // Remplacement de [[lookup @name lowercase]] par le nom du token attaquant
+                    f.system.description.value = f.system.description.value.replace(/\[\[lookup @name lowercase\]\]/g, this.attackerToken.name.toLowerCase());
+                    
+                    this.features.push({
+                        img: f.img,
+                        name: f.name,
+                        description: f.system.description.value,
+                    });
+                }
+            });
+        }
+
+        // Chargement des enrichers des features
+        this.loadFeaturesEnricher().then(() => this.refresh());
 
         // CA de la cible par défaut
         this.targetAC = this.targetToken.actor.system.attributes.ac.value ?? 10;
@@ -83,7 +106,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 }
             });
         }
-    }
+    }    
 
     /**
      * 
@@ -94,12 +117,29 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     /**
+     * Chargement des enrichers des features
+     * 
+     */
+    async loadFeaturesEnricher()
+    {
+        for (let i = 0; i < this.features.length; i++)
+            this.features[i].description = await TextEditor.enrichHTML(this.features[i].description, {
+                secrets: false,
+                entities: true,
+                rolls: true,
+                links: true, 
+                documents: true,
+            });
+    }
+
+    /**
      * 
      * @param {*} context 
      * @param {*} option 
      */
     _renderHTML(context, option)
-    {
+    {        
+        context.features = this.features;
         context.attacker = this.attackerToken;
         context.target = this.targetToken;
         context.targetAC = this.targetAC;
@@ -117,7 +157,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
         context.projectionHP = context.currentHP - totalDamage;
         if (context.projectionHP < 0)
             context.projectionHP = 0;
-        context.projectionColor = context.projectionHP <= 0 ? 'red' : 'green';
+        context.projectionColor = context.projectionHP <= 0 ? 'red' : 'forestgreen';
         context.concentrationChecks = this.concentrationChecks;
 
         return super._renderHTML(context, option);
