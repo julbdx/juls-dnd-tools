@@ -374,6 +374,22 @@ overflow: hidden !important;
     padding: 4px 0;
   }
 
+  .dtjul-quick-attack-app .status img {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .dtjul-quick-attack-app .delete-status {
+    border: 2px solid red;
+    border-radius: 4px;
+  }
+
+  /* ajouter un filtre rouge à l'image */
+  .dtjul-quick-attack-app .delete-status img {
+    filter: brightness(0.5) saturate(0) hue-rotate(180deg);
+  }
+
+
   .dtjul-quick-damage-app .portraits {
     display: flex;
     flex-direction: row;
@@ -393,6 +409,10 @@ overflow: hidden !important;
   text-align: center;
   font-size: var(--font-size-11);
   font-weight: bold;
+}
+
+.dtjul-quick-damage-app table {
+  margin: 1ex 0 1ex 0;
 }
 
 .dtjul-quick-damage-app .infos .hp { color: forestgreen; }

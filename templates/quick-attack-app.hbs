@@ -7,8 +7,10 @@
                 <tr>
                     <td style="vertical-align: top;"><img class="icon gold-icon" src="{{this.img}}" alt="{{this.name}}"/></td>
                     <td style="vertical-align: top; font-size: 90%;">
-                        <strong>{{this.name}}</strong>
-                        {{{this.description}}}
+                        <a data-action="itemInfoAction" data-item="{{this.id}}">
+                            <strong>{{this.name}}</strong>
+                            {{{this.description}}}
+                        </a>
                     </td>
                 </tr>
             {{/each}}
@@ -19,11 +21,25 @@
                 <div class="portrait">
                     <img class="gold-icon" src="{{attacker.document.texture.src}}" width="48" height="48" />
                 </div>
+                {{#each attackerStatuses}}
+                <div class="status {{#unless this.active}}delete-status{{/unless}}" data-tooltip="{{this.description}}">
+                    <a data-action="effectToogleAction" data-idx="{{this.idx}}">
+                        <img class="icon" src="{{this.img}}" alt="{{this.name}}" />
+                    </a>
+                </div>
+                {{/each}}
                 <div class="bonus header">
                     <button data-action="changeBonusAction" data-mode="-1">-</button>
                     <strong style="white-space: nowrap;">{{# if bonus}}Modificateur : {{bonusStr}}{{^}}Aucun bonus{{/if}}</strong>
                     <button data-action="changeBonusAction" data-mode="1">+</button>
                 </div>
+                {{#each defenderStatuses}}
+                <div class="status {{#unless this.active}}delete-status{{/unless}}" data-tooltip="{{this.description}}">
+                    <a data-action="effectToogleAction" data-idx="{{this.idx}}">
+                        <img class="icon" src="{{this.img}}" alt="{{this.name}}" />
+                    </a>
+                </div>
+                {{/each}}
                 <div class="portrait">
                     <img class="gold-icon" src="{{target.document.texture.src}}" width="48" height="48" />
                 </div>        
@@ -94,9 +110,9 @@
                     <table>                
                         {{#each damages}}
                         <tr>
-                            <td><img src="{{this.img}}" width="24" height="24" /></td>
+                            <td><img src="{{this.img}}" style="min-width: 24px; min-height: 24px; width: 24px; height: 24px;" /></td>
                             <td>
-                                {{this.nb}}x {{this.label}}
+                                {{this.label}}
                                 &nbsp;
                                 {{#if this.normal}}
                                 <a class="change" data-action="changeDamageAction" data-damage="{{this.id}}" data-mode="1"><i class="far fa-life-ring"></i></a>
@@ -151,7 +167,7 @@
                                 {{#if totalDamage}}
                                 <button data-action="applyDamageAction">&nbsp;Appliquer&nbsp;→&nbsp;</button>
                                 {{^}}
-                                Après
+                                <button data-action="nextRoundAction">&nbsp;Next&nbsp;round&nbsp;→&nbsp;</button>
                                 {{/if}}
                             </td>
                             <td style="color: {{projectionColor}};">{{projectionHP}}</td>

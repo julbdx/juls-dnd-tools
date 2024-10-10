@@ -25,6 +25,8 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
             changeDamageAction: QuickAttackApp.changeDamage,
             changeBonusAction: QuickAttackApp.changeBonus,
             itemInfoAction: QuickAttackApp.itemInfo,
+            effectToogleAction: QuickAttackApp.effectToogle,
+            nextRoundAction: QuickAttackApp.nextRound,
         }
     };
 
@@ -53,9 +55,11 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.concentrationChecks = [];
         this.bonus = 0;
         this.features = [];
+        this.statuses = [];
+        this.attackerStatuses = []; 
+        this.defenderStatuses = [];
 
-        // On récupère les features de l'attaquant
-        console.log(this.attackerToken.actor.collections);
+        // On récupère les features de l'attaquant        
         if (this.attackerToken.actor?.collections?.items)
         {            
             this.attackerToken.actor.collections.items.forEach(async f => {                
@@ -65,6 +69,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                     f.system.description.value = f.system.description.value.replace(/\[\[lookup @name lowercase\]\]/g, this.attackerToken.name.toLowerCase());
                     
                     this.features.push({
+                        id: f.id,
                         img: f.img,
                         name: f.name,
                         description: f.system.description.value,
@@ -72,9 +77,6 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 }
             });
         }
-
-        // Chargement des enrichers des features
-        this.loadFeaturesEnricher().then(() => this.refresh());
 
         // CA de la cible par défaut
         this.targetAC = this.targetToken.actor.system.attributes.ac.value ?? 10;
@@ -106,6 +108,39 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 }
             });
         }
+
+        // Les effets de l'attaquant
+        this.attackerToken.actor.effects.forEach(eff => {
+            const s = {
+                id: eff.id,
+                token: this.attackerToken,
+                idx: this.statuses.length,
+                img: eff.img,
+                name: eff.name,
+                description: eff.description,
+                active: true,
+            };
+            this.statuses.push(s);
+            this.attackerStatuses.push(s);
+        });
+
+        // Les effets de la cible
+        this.targetToken.actor.effects.forEach(eff => {
+            const s = {
+                id: eff.id,
+                token: this.targetToken,
+                idx: this.statuses.length,
+                img: eff.img,
+                name: eff.name,
+                description: eff.description,
+                active: true,
+            };
+            this.statuses.push(s);
+            this.defenderStatuses.push(s);
+        });
+
+        // Chargement des enrichers des features
+        this.loadFeaturesEnricher().then(() => this.refresh());
     }    
 
     /**
@@ -122,6 +157,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
      */
     async loadFeaturesEnricher()
     {
+        // Features ...
         for (let i = 0; i < this.features.length; i++)
             this.features[i].description = await TextEditor.enrichHTML(this.features[i].description, {
                 secrets: false,
@@ -130,6 +166,20 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 links: true, 
                 documents: true,
             });
+
+        // Et description des status !
+        for (let i = 0; i < this.statuses.length; i++)            
+        {
+            let d = await TextEditor.enrichHTML(this.statuses[i].description, {
+                secrets: false,
+                entities: true,
+                rolls: true,
+                links: true, 
+                documents: true,
+            });
+            
+            this.statuses[i].description = '<div style="text-align: left;"><strong>' + this.statuses[i].name +  '</strong>' + d + '</div>';
+        }
     }
 
     /**
@@ -138,7 +188,9 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
      * @param {*} option 
      */
     _renderHTML(context, option)
-    {        
+    {
+        context.attackerStatuses = this.attackerStatuses;
+        context.defenderStatuses = this.defenderStatuses;
         context.features = this.features;
         context.attacker = this.attackerToken;
         context.target = this.targetToken;
@@ -252,10 +304,10 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
                         let weapon = this.attackResults[i].weapon;
                         //let id = weapon.id + '-' + f.damageType;    // pour regrouper les dégâts par type
-                        let id = i;                        // pour ne pas regrouper les dégâts
+                        let id = i + '-' + f.damageType;              // pour ne pas regrouper les dégâts
                         rolls.push({
                             id: id,
-                            name: weapon.name,
+                            name: weapon.name + ' n°' + (i+1),
                             type: f.damageType,
                             roll: new Roll(formula),
                         });
@@ -403,6 +455,42 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
         const item = this.attackerToken.actor.collections.items.get(itemId);
         if (item)
             item.sheet.render(true);
+    }
+
+    /**
+     * Affichage des informations d'effect
+     * 
+     * @param {} event 
+     * @param {*} target 
+     */
+    static async effectToogle(event, target)
+    {
+        const effectId = target.dataset.idx;
+        const status = this.statuses.find(s => s.idx == effectId);
+        if (status)
+        {
+            status.active = !status.active;
+
+            if (status.active)
+            {
+                if (status.effect)
+                {
+                    let n = await status.token.actor.createEmbeddedDocuments("ActiveEffect", [status.effect]);
+                    status.id = n[0].id;
+                }
+            }
+            else
+            {
+                const effect = status.token.actor.effects.find(eff => eff.id == status.id);
+                if (effect)
+                {
+                    status.effect = effect;
+                    await status.token.actor.deleteEmbeddedDocuments("ActiveEffect", [effect.id])
+                }
+            }            
+        }
+
+        this.render();
     }
 
     /**
@@ -592,7 +680,8 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
         for (let i = 0; i < this.damages.length; i++)
         {
             let d = this.damages[i];
-            chatContent += `<li>${d.nb}x <strong>${d.label}</strong> : `;
+            //chatContent += `<li>${d.nb}x <strong>${d.label}</strong> : `;
+            chatContent += `<li><strong>${d.label}</strong> : `;
             chatContent += `${d.take}`;
             if (d.reduced)
                 chatContent += ` (<i class="fas fa-shield-alt"></i>${d.reduced})`;
@@ -684,12 +773,39 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
         
         // On avance l'initiative et on ferme la fenêtre
         const combat = game.combat;
-        const current = combat.combatant;
-        const next = combat.turns.findIndex(t => t.id == current.id) + 1;
-        if (next >= combat.turns.length)
-            await combat.nextRound();
-        else
-            await combat.update({ turn: next });
+        if (combat)
+        {
+            const current = combat.combatant;
+            const next = combat.turns.findIndex(t => t.id == current.id) + 1;
+            if (next >= combat.turns.length)
+                await combat.nextRound();
+            else
+                await combat.update({ turn: next });
+        }
+
+        // On ferme la fenêtre 
+        this.close();
+    }
+
+    /**
+     * Next round
+     * 
+     * @param {*} event 
+     * @param {*} target 
+     */
+    static async nextRound(event, target)
+    {
+        // On avance l'initiative et on ferme la fenêtre
+        const combat = game.combat;
+        if (combat)
+        {
+            const current = combat.combatant;
+            const next = combat.turns.findIndex(t => t.id == current.id) + 1;
+            if (next >= combat.turns.length)
+                await combat.nextRound();
+            else
+                await combat.update({ turn: next });
+        }
 
         // On ferme la fenêtre 
         this.close();
