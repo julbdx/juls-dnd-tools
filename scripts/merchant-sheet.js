@@ -169,6 +169,16 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
           .find('.permission-proficiency-bulk')
           .click((ev) => this._onCyclePermissionProficiencyBulk(ev))
   
+        // On désactive le menu contextuel pour les joueurs
+        if (!game.user.isGM) {
+          // Désactiver le menu contextuel avec un preventDefault sur le clic droit
+          html.find('.item-list .item').each((i, item) => {
+            $(item).on('contextmenu', event => {
+              event.preventDefault();
+            });
+          });
+        }
+
         // Price Modifier
         html.find('.price-modifier').click((ev) => this._priceModifier(ev))
   
@@ -236,22 +246,16 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
         });            
       });
 
-      // Si ce n'est pas le maître du jeu, on désactive le drop du drag&drop
-      if (true || !game.user.isGM) {        
-        html.find('.item-list').on('drop', (event) => {
-          //ui.notifications.warn("Vous ne pouvez pas vendre d'article à ce marchand pour l'instant."); // Message d'avertissement
-          // récupérons l'item drag&droppé 
-          this._sellItem(event);
-          return false;
-        });
+      // Gestion de la vente !
+      html.find('.item-list').on('drop', (event) => {
+        this._sellItem(event);
+        return false;
+      });
 
-        html.find('.inventory-element').on('drop', (event) => {
-          //ui.notifications.warn("Vous ne pouvez pas vendre d'article à ce marchand pour l'instant."); // Message d'avertissement
-          // récupérons l'item drag&droppé 
-          this._sellItem(event);
-          return false;
-        });
-      } 
+      html.find('.inventory-element').on('drop', (event) => {
+        this._sellItem(event);
+        return false;
+      });
     }
   
     /* -------------------------------------------- */
@@ -274,8 +278,7 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
         'itemOnlyOnce',
       ]
   
-      let targetKey = event.target.name.split('.')[3]
-      console.log(event)
+      let targetKey = event.target.name.split('.')[3]      
       if (expectedKeys.indexOf(targetKey) === -1) {
         // console.log(`Loot Sheet | Error changing stettings for "${targetKey}".`);
         return ui.notifications.error(`Error changing stettings for "${targetKey}".`)
@@ -793,8 +796,6 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
         // trouver l'icône DD5 correspondant à la monnaie (elles sont dans system.currency)
         let icon = `<i class="currency ${itemCostDenomination}" data-tooltip="${itemCostDenomination}"></i>`
 
-        console.log(buyer);
-
         this.chatMessage(
           seller,
           buyer,
@@ -859,29 +860,52 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
   
         // If container, just move the container
         if (item.type === 'container') {
-          containers.push(item)
-        } else {
-          let newItem = foundry.utils.duplicate(item)
-  
+          containers.push(item);
+        } else {          
           const update = {
             _id: itemId,
             'system.quantity': item.system.quantity - quantity,
           }
   
-          if (update['system.quantity'] === 0) {
-            deletes.push(itemId)
+          const isMerchant = this.actor === destination;
+
+          if (update['system.quantity'] === 0 && isMerchant) {  // Attention ici le item est le item vendu, donc isMerchant est à faux si c'est le marchand qui vends !!
+            deletes.push(itemId);
           } else {
-            updates.push(update)
+            updates.push(update);
           }
+
+          // Si le destinaire est un marchand (pas un joueur) et qu'il possède déjà un item avec le même nom, on augmente la quantité
+          // plutôt que de créer un nouvel objet
+          // On fait de même pour les joueurs si l'item n'est pas une arme ou un équipement
+          const isWeaponOrEquipment = item.type === 'weapon' || item.type === 'equipment';          
+
+          let existingItem = destination.items.find((i) => i.name == item.name)
+          if (existingItem && (isMerchant || !isWeaponOrEquipment)) {
+            let newQty = Number(existingItem.system.quantity) + Number(quantity)
+            destUpdates.push({
+                _id: existingItem.id,
+                system: {
+                  quantity: newQty,
+                }
+              });
+
+            results.push({
+                item: item,
+                quantity: quantity,
+              });
+          }
+          else {
+            let newItem = foundry.utils.duplicate(item)
+            newItem.system.quantity = quantity
   
-          newItem.system.quantity = quantity
-  
-          results.push({
-            item: newItem,
-            quantity: quantity,
-          })
-  
-          additions.push(newItem)
+            results.push({
+              item: newItem,
+              quantity: quantity,
+            });
+    
+            additions.push(newItem);
+          }          
         }
       }
   

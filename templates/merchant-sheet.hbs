@@ -204,7 +204,7 @@
               </item-list-controls>
             </div>
 
-            {{!-- Inventory List --}}
+            {{!-- Inventory List --}}            
             <section class="items-list inventory-list" data-item-list="inventory">
               {{!-- Sections / Categories --}}
               {{#each inventory as |
@@ -235,7 +235,7 @@
                   {{!-- Items --}}
                   <li
                     class="item collapsible {{#unless ctx.isExpanded}}collapsed{{/unless}}"
-                    data-item-id="{{ item.id }}"
+                    data-item-id="{{ item.id }}"                    
                     data-entry-id="{{ item.id }}"
                     data-item-name="{{ item.name }}"
                     data-item-sort="{{ item.sort }}"
@@ -295,7 +295,7 @@
                           min="0"
                         />
                         {{else}}
-                        <div class="item-detail">{{ item.system.quantity }}</div>
+                        <div class="item-detail">{{#if item.system.quantity}}{{ item.system.quantity }}{{^}}SOLD OUT{{/if}}</div>
                         {{/notequal}}
                         {{#notequal item.type "container"}}
                         <a
@@ -307,7 +307,7 @@
                         </a>
                         {{/notequal}}                        
                         {{^}}
-                            <div class="item-detail">{{ item.system.quantity }}</div>
+                          <div class="item-detail">{{#if item.system.quantity}}{{item.system.quantity }}{{^}}SOLD OUT{{/if}}</div>
                         {{/if}}
 
                       </div>
@@ -315,6 +315,7 @@
                       {{!-- Item Price --}}
                       <div
                         class="item-detail item-price {{#unless item.system.price.value}}empty{{/unless}}"
+                        data-tooltip="{{ item.system.price.value }}{{ item.system.price.denomination }}"
                       >
                         {{#if item.system.price.value}}
                         {{ lootsheetprice item.system.price.value ../../priceModifier }}
@@ -344,27 +345,18 @@
                         >
                           <i class="fas fa-trash"></i>
                         </a>
-                        {{/if}}
-
-                        {{!-- Expand/Collapse --}}
-                        <a
-                          class="item-control interface-only"
-                          data-toggle-description
-                          aria-label="{{ localize 'DND5E.ToggleDescription' }}"
-                        >
-                          {{#if ctx.isExpanded}}
-                          <i class="fas fa-compress"></i>
-                          {{else}}
-                          <i class="fas fa-expand"></i>
-                          {{/if}}
-                        </a>
+                        {{/if}}                        
 
                         {{#ifnot @root.editable}}
+                        {{#if item.system.quantity}}
                         <a
                           class="item-control item-buy item-action"
                           title="Acheter"
                           ><i class="fas fa-shopping-cart"></i
-                        ></a>                        
+                        ></a>
+                        {{^}}
+                        <span>&nbsp;</span>
+                        {{/if}}
                         {{/ifnot}}
 
                         {{!-- Context Menu --}}
@@ -404,7 +396,7 @@
                 </div>
                 <section class="currency" style="display: flex; flex-direction: row; align-items: center; padding: 0.7ex 1em 0.7ex 1em; margin-left: 48px;">
                     <strong style="display: block;">{{ buyer.name }}</strong>
-                    <div style="display: block;">— votre argent : </div>
+                    <div style="display: block;"> : </div>
                     {{#each buyerFunds}}
                     <strong style="display: block; padding-left: 1em;">{{ this }}</strong>
                     <i
