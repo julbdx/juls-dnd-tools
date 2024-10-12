@@ -65,6 +65,9 @@ overflow: hidden !important;
     bottom: 0;
   }
 
+  .buy-link {
+    text-decoration: underline;
+  }
 
   .dtjul-photo-box {
     position: absolute;    
