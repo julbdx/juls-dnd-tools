@@ -19,7 +19,7 @@
         <div class="attcks" style="flex-grow: 1;">
             <div class="header">        
                 <div class="portrait">
-                    <img class="gold-icon" src="{{attacker.document.texture.src}}" width="48" height="48" />
+                    <img class="gold-icon" src="{{attacker.document.texture.src}}" width="64" height="64" data-tooltip="{{attacker.document.name}}" />
                 </div>
                 {{#each attackerStatuses}}
                 <div class="status {{#unless this.active}}delete-status{{/unless}}" data-tooltip="{{this.description}}">
@@ -41,7 +41,7 @@
                 </div>
                 {{/each}}
                 <div class="portrait">
-                    <img class="gold-icon" src="{{target.document.texture.src}}" width="48" height="48" />
+                    <img class="gold-icon" src="{{target.document.texture.src}}" width="64" height="64" data-tooltip="{{target.document.name}}"/>
                 </div>        
             </div>
 

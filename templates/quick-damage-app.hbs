@@ -4,7 +4,7 @@
         <div class="portraits">
         {{#each targets}}                
             <div>
-                <img src="{{this.document.texture.src}}" width="48" height="48" />
+                <img src="{{this.document.texture.src}}" class="gold-icon" width="64" height="64" data-tooltip="{{this.document.name}}" />
                 <div class="infos">
                     <div class="ac">AC : {{this.document.actor.system.attributes.ac.value}}</div>
                     <div class="hp">HP : {{this.document.actor.system.attributes.hp.value}}</div>

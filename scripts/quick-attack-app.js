@@ -228,10 +228,8 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
             {
                 // Non, lançons le dé
                 const die = new Roll(this.attackResults[i].formula);
-                await die.roll();
-                // Si Dice So Nice est activé, afficher l'animation des dés
-                if (game.dice3d)
-                    game.dice3d.showForRoll(die);  // ne pas attendre la fin de l'animation
+                await die.roll();                
+                die.toMessage({rollMode: "roll"}); // On affiche le jet de dé
                 this.attackResults[i].rolls.push( { roll : die, die : die.terms[0].results[0].result, result: die.total } );
             }
 
@@ -244,9 +242,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                     // Non, lançons le dé
                     const die = new Roll(this.attackResults[i].formula);
                     await die.roll();
-                    // Si Dice So Nice est activé, afficher l'animation des dés
-                    if (game.dice3d)
-                        game.dice3d.showForRoll(die);  // ne pas attendre la fin de l'animation
+                    die.toMessage({rollMode: "roll"}); // On affiche le jet de dé
                     this.attackResults[i].rolls.push( { roll : die, die : die.terms[0].results[0].result, result: die.total } );
                 }                
             }
@@ -318,9 +314,8 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                         await rolls[j].roll.roll();
 
                     // Montrons les jets de dé tous en même temps !
-                    if (game.dice3d) {
-                        rolls.forEach(r => game.dice3d.showForRoll(r.roll));
-                    }
+                    rolls.forEach(r => r.roll.toMessage({rollMode: "roll"})); // On affiche le jet de dé;
+
                     
                     this.attackResults[i].damage = rolls;
 
@@ -557,9 +552,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
         // Ajoutons le dé
         const die = new Roll(attack.formula);
         await die.roll();
-        // Si Dice So Nice est activé, afficher l'animation des dés
-        if (game.dice3d)
-            game.dice3d.showForRoll(die);  // ne pas attendre la fin de l'animation
+        die.toMessage({rollMode: "roll"}); // On affiche le jet de dé
         attack.rolls.push( { roll : die, die : die.terms[0].results[0].result, result: die.total } );
 
         // Si on est en mode normal, on passe en mode avantage (car nous avons plus d'un dé)

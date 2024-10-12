@@ -255,9 +255,7 @@ export class QuickDamageApp extends HandlebarsApplicationMixin(ApplicationV2) {
                         d = d.replace(/d(\d+)/, 'd$1[' + this.damages[j].type + ']');
                         const r = new Roll(d);
                         await r.roll();
-                        // Si Dice So Nice est activé, afficher l'animation des dés
-                        if (game.dice3d)
-                            game.dice3d.showForRoll(r);  // ne pas attendre la fin de l'animation
+                        r.toMessage({rollMode: "roll"}); // On affiche le jet de dé
 
                         dmg = r.total;
                     }
