@@ -2,6 +2,7 @@ import constants from "../Constants.js";
 import { registerSettings } from "./settings.js";
 import { QuickAttackApp } from './quick-attack-app.js';
 import { QuickDamageApp } from './quick-damage-app.js';
+import { BuyServiceApp } from "./buy-service-app.js";
 import { JulMerchantSheet } from './merchant-sheet.js';
 
 /*
@@ -57,13 +58,25 @@ Hooks.once("init", () => {
          const amount = match[1];  // La somme d'argent, ex: "2gp 4sp"
          const label = match[2] || amount;  // Label à afficher
          const transactionName = match[3] || label;  // Nom de la transaction
+         
+         let amountStr = amount;
+         // Pour chaque devise, on remplace le symbole par le nom complet
+         for (const [key, value] of Object.entries(CONFIG.DND5E.currencies))
+         {
+            amountStr = amountStr.replace(key, ' <i class="currency ' + key + '" data-tooltip="' + value.label + '"></i>');
+            console.log(value);
+         }
 
          // Créer un élément HTML interactif
-         const a = document.createElement('a');
-         a.classList.add('buy-link');
-         a.setAttribute('data-amount', amount);
-         a.setAttribute('data-transaction-name', transactionName);
-         a.innerText = label;
+         const a = document.createElement('span');
+         a.classList.add('award-block');
+         a.classList.add('dnd5e2');
+         a.innerHTML = '<span class="award-entry">' + amountStr + '</span> ' + 
+                        '<a class="buy-link" data-amount="' + amount + '" data-transaction-name="' + 
+                        // Echappement des "
+                        transactionName.replace(/"/g, '&quot;') +                        
+                        '">' + 
+                        '<i class="fa-solid fa-shopping-cart"></i> Acheter</i></a>';
          return a;
       },
       priority: 0,  // Optionnel, priorité d'exécution
@@ -780,146 +793,10 @@ async function julQuickDamage(targetsTokens, defaultDamage = 'force')
    // Créer et afficher l'application
    const app = new QuickDamageApp(targetsTokens, defaultDamage);
    app.render(true);  // Afficher l'application
-}
+}   
 
-function parseCurrency(amountStr) {
-   const currency = {
-     pp: 0,
-     gp: 0,
-     ep: 0,
-     sp: 0,
-     cp: 0
-   };
- 
-   const regex = /(\d+)\s*(pp|gp|ep|sp|cp)/gi;
-   let match;
-   while ((match = regex.exec(amountStr)) !== null) {
-     const value = parseInt(match[1]);
-     const type = match[2].toLowerCase();
-     currency[type] += value;
-   }
- 
-   return currency;
- }
-
- function getPartyActors() {
-   // Supposons que vous avez un groupe nommé "Party"
-   // const partyActor = game.settings.get("dnd5e", "primaryParty")?.actor;
-   return game.actors.filter(actor => actor.hasPlayerOwner && actor.type === 'character');
- }
-
- async function deductCurrency(actor, cost) {
-   const currency = actor.system.currency;
- 
-   // Calculer la valeur totale en pièces de cuivre
-   const actorTotalCp = convertToCopper(currency);
-   const costTotalCp = convertToCopper(cost);
- 
-   if (actorTotalCp < costTotalCp) {
-     return false;  // Pas assez d'argent
-   }
- 
-   // Déduire le coût
-   const newTotalCp = actorTotalCp - costTotalCp;
-   const newCurrency = convertFromCopper(newTotalCp);
- 
-   // Mettre à jour l'acteur
-   await actor.update({ 'system.currency': newCurrency });
-   return true;
- }
- 
- 
- function convertToCopper(currency) {
-   return (currency.pp * 1000) + (currency.gp * 100) + (currency.ep * 50) + (currency.sp * 10) + currency.cp;
- }
- 
- function convertFromCopper(totalCp) {
-   const pp = Math.floor(totalCp / 1000);
-   totalCp %= 1000;
-   const gp = Math.floor(totalCp / 100);
-   totalCp %= 100;
-   const ep = Math.floor(totalCp / 50);
-   totalCp %= 50;
-   const sp = Math.floor(totalCp / 10);
-   const cp = totalCp % 10;
- 
-   return { pp, gp, ep, sp, cp };
- }
- 
- function formatCurrency(currency) {
-   let parts = [];
-   for (let [key, value] of Object.entries(currency)) {
-     if (value > 0) {
-       parts.push(`${value}${key}`);
-     }
-   }
-   return parts.join(' ');
- }
- 
-
- async function processTransaction(actorIds, currency, transactionName) {
-   const actors = actorIds.map(id => game.actors.get(id));
-   const failedActors = [];
- 
-   for (const actor of actors) {
-     const result = await deductCurrency(actor, currency);
-     if (!result) {
-       failedActors.push(actor.name);
-     }
-   }
- 
-   // Préparer le message de chat
-   const actorNames = actors.map(a => a.name).join(', ');
-   const amountStr = formatCurrency(currency);
-   const verb = actors.length > 1 ? 'ont' : 'a';
-   const messageContent = `${actorNames} ${verb} dépensé ${amountStr} pour acheter <strong>${transactionName}</strong>.`;
-
-   // Afficher le message dans le chat
-   ChatMessage.create({
-     user: game.user.id,
-     speaker: { alias: 'Système' },
-     content: messageContent
-   });
-
-   // Informer si certains acteurs n'avaient pas assez d'argent
-   if (failedActors.length > 0) {
-     ui.notifications.warn(`Les acteurs suivants n'avaient pas assez d'argent : ${failedActors.join(', ')}`);
-   }
- } 
-
- async function handleMoneyTransaction(amount, transactionName) {
-   // Parser la somme d'argent
-   const currency = parseCurrency(amount);  // À implémenter
- 
-   // Obtenir la liste des acteurs de la party
-   const partyActors = getPartyActors();  // À implémenter
- 
-   // Créer une boîte de dialogue
-   let content = '<p>Achat <strong>' + transactionName + '</strong> pour ' + amount + '</p>';
-   partyActors.forEach(actor => {
-     content += `<div>
-       <label>
-         <input type="checkbox" name="actorIds" value="${actor.id}">
-         ${actor.name}
-       </label>
-     </div>`;
-   });
- 
-   new Dialog({
-     title: 'Qui fait la transaction ?',
-     content: `<form>${content}</form>`,
-     buttons: {
-       ok: {
-         label: 'Confirmer',
-         callback: async (html) => {
-           const actorIds = Array.from(html.find('input[name="actorIds"]:checked')).map(input => input.value);
-           await processTransaction(actorIds, currency, transactionName);
-         }
-       },
-       cancel: {
-         label: 'Annuler'
-       }
-     }
-   }).render(true);
- }
- 
+async function handleMoneyTransaction(amount, transactionName) {
+   // On lance l'application d'achat de service
+   const app = new BuyServiceApp(amount, transactionName);
+   app.render(true);  // Afficher l'application
+} 

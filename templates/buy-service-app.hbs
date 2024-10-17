@@ -1,0 +1,54 @@
+<div>
+    <p>
+        Cliquez sur le bouton d'achat en face d'une ligne pour acheter le service pour un PJ, ou sur le bouton de vente pour rembourser le service.
+    </p>
+    <p>
+        <strong>Coût du service : </strong><span class="award-entry">
+            {{#each amount}}
+            {{#if this}}
+            {{ this }}<i class="currency {{ @key }}" data-tooltip="{{ lookup (lookup @root.config.currencies @key) 'label' }}"></i>
+            {{/if}}
+            {{/each}}
+        </span>
+    </p>
+    <div class="buy">
+        <table>
+            <!--<tr>
+                <th colspan="2">Acteur</th>
+                <th>Fonds</th>
+                <th colspan="2">Actions</th>
+            </tr>-->
+        {{#each players}}
+            <tr>
+                <td>
+                    <img src="{{this.actor.img}}" class="gold-icon" data-tooltip="{{this.actor.name}}" />                    
+                </td>
+                <td>
+                    {{this.actor.name}}
+                </td>
+                <td>
+                    <span class="award-entry">
+                    {{#each funds}}
+                    {{#if this}}
+                    {{ this }}<i class="currency {{ @key }}" data-tooltip="{{ lookup (lookup @root.config.currencies @key) 'label' }}"></i>
+                    {{/if}}
+                    {{/each}}   
+                    </span>
+                </td>
+                <td>
+                    <button class="sell-service" data-id="{{this.id}}" data-qty="-1" data-action="transactionAction"> Vendre </button>
+                </td>
+                <td>
+                    <button class="buy-service" data-id="{{this.id}}" data-qty="1" data-action="transactionAction" {{#if canBuy}}{{else}}disabled{{/if}}> Acheter </button>
+                </td>
+                <td>
+                    &nbsp;(<strong>{{this.nb}}</strong>)&nbsp;
+                </td>
+            </tr>
+        {{/each}}
+        </table>
+        <div>
+            <button data-action="closeAction">Fermer</button>
+        </div>
+    </div>    
+</div>

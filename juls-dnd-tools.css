@@ -175,6 +175,17 @@
       }
   }
 
+  .buy-link {
+    text-decoration: none;
+    border: 1px dotted #666;
+    border-radius: 4px;
+    padding: 2px;
+  }
+
+  .buy-link:hover {    
+    border: 1px solid #444;
+  }
+
   .dtjul-window {
     font-family: var(--font-primary);
   }
@@ -305,13 +316,15 @@
     gap: 0.5rem;
   }
 
-  .dtjul-quick-attack-app .icon {
+  .dtjul-quick-attack-app .icon
+  {
     min-width: 32px;
     min-height: 32px;
     width: 32px;
     height: 32px;
   }
 
+  .dtjul-buy-app .buy img,
   .dtjul-quick-attack-app .big-icon {
     min-width: 48px;
     min-height: 48px;
@@ -373,10 +386,12 @@
     gap: 0.5rem;
   }
 
-  .dtjul-quick-damage-app .header img {
+  .dtjul-quick-damage-app .header img
+  {
     border-radius: 50% !important;
   }  
 
+  .dtjul-buy-app table th, .dtjul-buy-app table td,    
   .dtjul-quick-damage-app table th, .dtjul-quick-damage-app table td {
     padding: 2px 2px !important;
   }
@@ -387,6 +402,7 @@
   font-weight: bold;
 }
 
+.dtjul-buy-app table, 
 .dtjul-quick-damage-app table {
   margin: 1ex 0 1ex 0;
 }

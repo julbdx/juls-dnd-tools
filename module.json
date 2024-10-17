@@ -15,6 +15,7 @@
     "scripts/merchant-sheet.js",
     "scripts/quick-damage-app.js",
     "scripts/quick-attack-app.js",
+    "scripts/buy-service-app.js",
     "scripts/main.js"
   ],
   "styles": [
