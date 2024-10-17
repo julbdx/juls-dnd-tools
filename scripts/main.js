@@ -554,9 +554,7 @@ Hooks.on('renderJournalTextPageSheet', (app, html, data) => {
       }
 
       event.stopPropagation();
-   });
-
-   
+   });   
  });
 
 Hooks.on('renderJournalSheet', (app, html) => {
