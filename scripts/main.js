@@ -81,7 +81,8 @@ Hooks.once("init", () => {
       },
       priority: 0,  // Optionnel, priorité d'exécution
       name: 'buy-enricher'  // Optionnel, nom de l'enricher
-   });
+   },
+   );
 
    // Enregistrer un nouveau paramètre de configuration pour chaque joueur
    game.settings.register("juls-dnd-tools", "tvMode", {
@@ -542,6 +543,20 @@ Hooks.on('renderJournalTextPageSheet', (app, html, data) => {
      const transactionName = event.currentTarget.getAttribute('data-transaction-name');
      await handleMoneyTransaction(amount, transactionName);
    });
+
+   // Sur tous les liens de classe "content-link" ayant une propriété data-type="Scene", on pose un écouteur d'événement
+   html.on('click', '.content-link[data-type="Scene"]', async (event) => {
+      event.preventDefault();
+      const sceneId = event.currentTarget.getAttribute('data-id');
+      const scene = game.scenes.get(sceneId);
+      if (scene) {
+         scene.activate();
+      }
+
+      event.stopPropagation();
+   });
+
+   
  });
 
 Hooks.on('renderJournalSheet', (app, html) => {
