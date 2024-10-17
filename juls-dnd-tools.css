@@ -473,3 +473,15 @@
   box-shadow: 0 0 6px var(--dnd5e-shadow-45);
   border: var(--dnd5e-border-gold);
 }
+
+.random-table td:first-child {
+  font-weight: bold;
+  border-right: 1px solid #888;  
+  white-space: nowrap;
+  text-align: center;
+  vertical-align: top;
+}
+
+.random-table td {
+  border-top: 1px solid #888;
+}
