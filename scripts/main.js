@@ -70,6 +70,24 @@ Hooks.once("init", () => {
       name: 'buy-enricher'  // Optionnel, nom de l'enricher
    });
 
+   // Enregistrer un nouveau paramètre de configuration pour chaque joueur
+   game.settings.register("juls-dnd-tools", "tvMode", {
+      name: "Mode TV", // Le nom visible du paramètre
+      hint: "Choisissez Horizontal si l'écran est positionné sur la table des joueurs, ou vertical si normal", // Un texte explicatif
+      scope: "client", // Ce paramètre est propre à chaque joueur
+      config: true, // Afficher dans l'interface de configuration
+      type: String, // Le type de valeur (chaîne de caractères dans ce cas)
+      choices: {
+          "vertical": "Mode TV Vertical",
+          "horizontal": "Mode TV Horizontal"
+      }, // Les choix possibles
+      default: "vertical", // Valeur par défaut
+      onChange: value => {
+          console.log(`Mode TV changé pour : ${value}`);
+          // Tu peux ajouter ici une action lorsque le mode change
+      }
+  });
+
    class CustomJulD20Roll extends CONFIG.Dice.D20Roll {
       constructor(formula, data, options) {
          super(formula, data, options);
@@ -402,6 +420,15 @@ Hooks.once("ready", () => {
       linkElement.rel = "stylesheet";
       linkElement.href = "modules/juls-dnd-tools/assets/players.css"; // Chemin vers le fichier CSS
       document.head.appendChild(linkElement);
+
+      const tvMode = game.settings.get("juls-dnd-tools", "tvMode");
+      if (tvMode == 'horizontal')
+      {
+         const linkElement = document.createElement("link");
+         linkElement.rel = "stylesheet";
+         linkElement.href = "modules/juls-dnd-tools/assets/horizontal.css"; // Chemin vers le fichier CSS
+         document.head.appendChild(linkElement);
+      }
    }
    
    game.socket.on(socketName, (data) => { 
@@ -548,8 +575,8 @@ async function getImageOrientation(sourceUrl) {
 
 Hooks.on('renderImagePopout', async (app, html, data) => {
 
-   if( !game.user.isGM ) {
-      
+   if( !game.user.isGM ) {      
+
       // Trouver toutes les fenêtres popout ouvertes
       const openPopouts = Object.values(ui.windows).filter(w => w instanceof ImagePopout);
 
@@ -563,7 +590,10 @@ Hooks.on('renderImagePopout', async (app, html, data) => {
       let render = '<div class="window-content dtjul-photo-window">';
       
       // Tableau contenant les textes
-      const frames = ["top", "bottom", "side"];
+      const tvMode = game.settings.get("juls-dnd-tools", "tvMode");
+      let frames = ["full"];
+      if (tvMode == 'horizontal')
+         frames = ["top", "bottom", "side"];
 
       let orientation = await getImageOrientation(data.image);
 
@@ -613,6 +643,8 @@ Hooks.on('renderImagePopout', async (app, html, data) => {
       render += "</div>";
 
       html.html(render);
+      html.addClass('dtjul-image-popout-app');
+      html.removeClass('app window window-app dark');      
 
       // Once the box has fully appeared, reveal the text and separator
       setTimeout(() => {

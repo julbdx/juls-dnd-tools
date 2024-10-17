@@ -1,0 +1,10 @@
+#combat-dock {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 100vh;
+    margin-top: 100vh;
+    transform: rotate(90deg);
+    transform-origin: top right;
+    overflow: hidden;
+}

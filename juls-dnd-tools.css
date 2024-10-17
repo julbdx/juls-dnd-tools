@@ -1,63 +1,9 @@
-  /*
-  .journal-entry-pages .wa-link, 
-  .journal-entry-pages .content-link,
-  .journal-entry-pages .passive-check {
-	  background-color: inherit !important;
-	  color: green;
-	  border: none;
-  }
-
-  .journal-entry-pages blockquote {
-	  margin: 2ex 2em;
-    padding: 2ex 2em;
-    font-size: 110%;
-	  border-right: none;
-	  border-left: none;
-    border-top: 1px solid green;
-    border-bottom: 1px solid green;
-    background: #0077000f;
-  }
-
-  .award-block [data-action="awardRequest"] {
-	  margin: 0 0.5ex;
-  }
-
-  .sheet.journal-entry.dnd5e2-journal .journal-page-content .roll-link {
-	  color: green;
-  }
-
-  .sheet.journal-entry.dnd5e2-journal .journal-page-content .roll-link a > i {
-	  color: green !important;
-  }
-    */
-
+ 
 #combat-dock #combatants {
-overflow: hidden !important;
+  overflow: hidden !important;
 }
-
-  .hide-ui #combat-dock {
-    position: fixed;
-    top: 0;
-    right: 0;
-    width: 100vh;
-    margin-top: 100vh;
-    transform: rotate(90deg);
-    transform-origin: top right;
-    overflow: hidden;
-  }
-  
-  .hide-ui #combat-dock2 {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vh;
-    margin-top: 100vh;
-    transform: rotate(270deg);
-    transform-origin: top left;
-    overflow: hidden;
-  }
-  
-  .dtjul-photo-window {
+ 
+.dtjul-photo-window {
     position: fixed;
     left: 0;
     right: 0;
@@ -65,8 +11,16 @@ overflow: hidden !important;
     bottom: 0;
   }
 
-  .buy-link {
+.buy-link {
     text-decoration: underline;
+  }
+
+  .dtjul-image-popout-app {
+    width: 1px !important;
+    height: 1px !important;
+    top: 0 !important;
+    left: 0 !important;
+    background: none !important;
   }
 
   .dtjul-photo-box {
@@ -74,11 +28,30 @@ overflow: hidden !important;
     
     /*width: 30vw;*/
 
-    border: 16px solid white;
+    border: 16px solid rgb(251, 248, 234);    
+    /*border-image: url('/modules/juls-dnd-tools/assets/greek-meander.png');
+    border-image-width: 16px;
+    border-image-repeat: round;
+    border-image-slice: 72;
+    border-image-outset: 0;*/
     opacity: 0;
     animation: dtjulfadeIn 2s forwards;
 
     box-shadow: 10px 10px 30px rgba(0, 0, 0, 0.5); /* Ombre sous la photo-box */
+  }
+
+  .dtjul-photo-box.full.landscape {
+    left: 50%;
+    top: 50%; 
+    transform: translate(-50%, -50%) rotate(1deg);
+    width: 95vw;
+  }
+
+  .dtjul-photo-box.full.portrait {
+    left: 50%;
+    top: 50%; 
+    transform: translate(-50%, -50%) rotate(-1deg);
+    height: 95vh;
   }
   
   .dtjul-photo-box.side.landscape {
