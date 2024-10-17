@@ -13,15 +13,26 @@
         {{/each}}
         </div>
     </div>
+    {{#if attention}}
+    <p style="font-weight: bold; color: crimson;">
+        Attention, l'une des cibles est un PJ ! Est-ce voulu ?
+    </p>
+    {{/if}}
 
     <table>
         {{#each damages}}
         <tr>
             <td style="width: 32px;"><img src="{{this.img}}" width="24" height="24" /></td>
             <td>{{this.label}}</td>
+            <td><button data-action="addDamageAction" data-damage="{{this.type}}" data-value="-10">-10</button></td>
+            <td><button data-action="addDamageAction" data-damage="{{this.type}}" data-value="-5">-5</button></td>
+            <td><button data-action="addDamageAction" data-damage="{{this.type}}" data-value="-1">-1</button></td>
             <td>
                 <input style="text-align: center;" type="text" name="{{this.type}}" value="{{this.value}}" data-damage="{{this.type}}" />
             </td>
+            <td><button data-action="addDamageAction" data-damage="{{this.type}}" data-value="1">+1</button></td>
+            <td><button data-action="addDamageAction" data-damage="{{this.type}}" data-value="5">+5</button></td>
+            <td><button data-action="addDamageAction" data-damage="{{this.type}}" data-value="10">+10</button></td>            
         </tr>
         {{/each}}
     </table>
@@ -37,8 +48,8 @@
     {{#unless st_no}}
     <div class="choices">
         <input type="text" name="stdc" value="{{st_dc}}" style="flex-grow: 1; text-align: center; font-weight: bold;"/>
-        <a class="choice{{#if st_no_dmg}} active-choice{{/if}}" data-action="changeSavingThrowEffectAction" data-value="0">Pas de dégâts</a>
-        <a class="choice{{#if st_half_dmg}} active-choice{{/if}}" data-action="changeSavingThrowEffectAction" data-value="0.5">Dégâts réduits</a>
+        <a class="choice{{#if st_no_dmg}} active-choice{{/if}}" data-action="changeSavingThrowEffectAction" data-value="none">Pas de dégâts</a>
+        <a class="choice{{#if st_half_dmg}} active-choice{{/if}}" data-action="changeSavingThrowEffectAction" data-value="half">Dégâts réduits</a>
     </div>
     {{/unless}}
     <hr>

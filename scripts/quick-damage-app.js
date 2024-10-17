@@ -19,6 +19,7 @@ export class QuickDamageApp extends HandlebarsApplicationMixin(ApplicationV2) {
             changeSavingThrowEffectAction: QuickDamageApp.changeSavingThrowEffect,
             changeNbAttacksAction: QuickDamageApp.changeNbAttacks,
             applyDamageAction: QuickDamageApp.applyDamage,
+            addDamageAction: QuickDamageApp.addDamage,
         }
     };
 
@@ -49,7 +50,7 @@ export class QuickDamageApp extends HandlebarsApplicationMixin(ApplicationV2) {
             this.savingThrowDC = c.actor.system.attributes.spelldc;
         }
 
-        this.savingThrowEffect = 0.5;
+        this.savingThrowEffect = "half";
 
         // Initialisation d'un tableau qui contient une entrée pour chaque type de dommage possible dans le système DD5
         // CONFIG.DND5E.damageTypes est un objet dont les clés sont les types de dommages et les valeurs sont les traductions
@@ -87,6 +88,16 @@ export class QuickDamageApp extends HandlebarsApplicationMixin(ApplicationV2) {
     {
         context.targets = this.targetTokens;        
         context.damages = this.damages;
+        context.attention = false;
+        // Si au moins une des cibles est un joueur, attention passe à vrai
+        for (let t = 0; t < this.targetTokens.length; t++)
+        {
+            if (this.targetTokens[t].actor.hasPlayerOwner)
+            {
+                context.attention = true;
+                break;
+            }
+        }
 
         context.st_no = this.savingThrow === '';
         context.st_str = this.savingThrow === 'str';
@@ -96,8 +107,8 @@ export class QuickDamageApp extends HandlebarsApplicationMixin(ApplicationV2) {
         context.st_wis = this.savingThrow === 'wis';
         context.st_cha = this.savingThrow === 'cha';
         
-        context.st_no_dmg = this.savingThrowEffect === 1;
-        context.st_half_dmg = this.savingThrowEffect === 0.5;
+        context.st_no_dmg = this.savingThrowEffect === "none";
+        context.st_half_dmg = this.savingThrowEffect === "half";
 
         context.st_dc = this.savingThrowDC;
         context.nbAttacks = this.nbAttacks;
@@ -137,7 +148,7 @@ export class QuickDamageApp extends HandlebarsApplicationMixin(ApplicationV2) {
      */
     static async changeSavingThrowEffect(event, target)
     {
-        this.savingThrowEffect = parseFloat(target.dataset.value);
+        this.savingThrowEffect = target.dataset.value;
         await this.refresh();
     }
 
@@ -170,6 +181,38 @@ export class QuickDamageApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 break;
             }
         }        
+    }
+
+    /**
+     * Ajoute/retire des dommages
+     * 
+     * @param {*} event 
+     * @param {*} target 
+     */
+    static addDamage(event, target)
+    {
+        const modif = parseInt(target.dataset.value);
+        const dmg = target.dataset.damage;
+
+        for (let i = 0; i < this.damages.length; i++)
+        {
+            if (this.damages[i].type == dmg)
+            {
+                let ov = parseInt(this.damages[i].value) ?? 0;
+                // Si ov est Nan, alors on met 0
+                if (isNaN(ov))
+                    ov = 0;
+                
+                let value = ov + modif;
+                if (value < 0) value = 0;
+                if (value == 0) value = '';
+
+                this.damages[i].value = value.toString();
+                break;
+            }
+        }
+
+        this.render();
     }
 
     /**
@@ -235,7 +278,16 @@ export class QuickDamageApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 {
                     chatContent += `✔ Jet de sauvegarde ${this.savingThrow} : ${score} >= ${this.savingThrowDC} : réussi !`;
                     // Modification des dégâts
-                    damageMultiplier = this.savingThrowEffect;
+                    damageMultiplier = 1;
+                    switch (this.savingThrowEffect)
+                    {
+                        case "none":
+                            damageMultiplier = 0;
+                            break;
+                        case "half":
+                            damageMultiplier = 0.5;
+                            break;
+                    }
                 }
             }
 
@@ -357,6 +409,6 @@ export class QuickDamageApp extends HandlebarsApplicationMixin(ApplicationV2) {
         };
         
         // On ferme la fenêtre 
-        //this.close();
+        this.close();
     }
 }
