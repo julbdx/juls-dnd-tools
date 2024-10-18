@@ -1,0 +1,132 @@
+<div>
+    <!-- switch pour un repos court ou long (un switch pas de bouton) -->
+    <div class="rest-type" style="text-align: center;">
+        <div class="choices">
+            <a class="choice{{#if short_rest}} active-choice{{/if}}"data-action="chooseRestTypeAction" data-value="short">Repos court</a>
+            <a class="choice{{#if long_rest}} active-choice{{/if}}"data-action="chooseRestTypeAction" data-value="long">Repos long</a>
+        </div>
+    </div>
+    
+    <div class="rest-options">
+        <table>
+            <tr>
+                <th></th>
+                {{#each players}}                
+                <td>
+                    <a data-action="chooseActorAction" data-id="{{this.id}}"
+                        class="{{#if this.resting}}selected{{/if}}">
+                        <img src="{{this.actor.img}}" class="gold-icon" width="96" height="96" data-tooltip="{{this.actor.name}}" />
+                    </a>
+                </td>
+                {{/each}}
+            </tr>            
+            <tr>
+                <th>PJ</th>
+                {{#each players}}                
+                <td class="{{#if this.resting}}resting{{^}}not-resting{{/if}}">
+                    <strong>{{this.actor.name}}</strong>
+                </td>
+                {{/each}}
+            </tr>
+            <tr>
+                <th>État</th>
+                {{#each players}}                
+                <td>                    
+                    {{#each statuses}}
+                        <img class="icon status" src="{{this.img}}" alt="{{this.name}}" width="24" height="24" />                        
+                    {{/each}}
+                </td>
+                {{/each}}
+            </tr>
+            {{#if short_rest}}
+            <tr>
+                <th>Dés de vie restants</th>
+                {{#each players}}                
+                <td class="{{#if this.resting}}resting{{^}}not-resting{{/if}}">
+                    {{#each die_hp}}
+                    <!-- On affiche une checkbox pour pouvoir consommer chaque dé de vie du personnage -->
+                    <div>
+                        <input type="checkbox" id="die{{../id}}-{{this.id}}" data-action="consumeDieAction" data-actor="{{../id}}" data-value="{{this.id}}" {{#if this.consumed}}checked{{/if}}/>
+                        <label for="die{{../id}}-{{this.id}}">{{this.dice}} ({{this.class.name}})</label>
+                    </div>
+                    {{/each}}
+                </td>
+                {{/each}}
+            </tr>
+            <tr>
+                <th>PV gagnés</th>
+                {{#each players}}                
+                <td class="{{#if this.resting}}resting{{^}}not-resting{{/if}}">
+                    <div class="oneline">
+                        <!--<button>-</button>-->
+                        <input style="text-align: center;" type="text" name="hp" value="{{this.hp}}" data-actor="{{this.id}}" />
+                        <!--<button>+</button>-->
+                    </div>
+                </td>
+                {{/each}}
+            </tr>
+            <tr>
+                <th>PV final</th>
+                {{#each players}}                
+                <td>
+                    <strong>{{after_hp}} / {{max_hp}}</strong>
+                </td>
+                {{/each}}
+            </tr>
+            {{/if}}
+
+            <tr>
+                <th>Eau</th>
+                {{#each players}}
+                <td class="{{#if this.resting}}resting{{^}}not-resting{{/if}}">
+                    <div class="items">
+                        {{#each this.food}}
+                        {{#if this.water}}
+                            <div>
+                                <a data-tooltip="{{this.item.name}} x{{this.qty}}" data-action="consumeAction" data-actor="{{../id}}" data-value="{{this.id}}"><img src="{{this.item.img}}" class="gold-icon" width="48" height="48"/></a><br>
+                                <span>x{{this.qty}}</span>
+                            </div>
+                        {{/if}}
+                        {{/each}}
+                    </div>
+                </td>
+                {{/each}}
+            </tr>
+
+            {{#if long_rest}}
+            <tr>
+                <th>Provisions</th>
+                {{#each players}}
+                <td class="{{#if this.resting}}resting{{^}}not-resting{{/if}}">
+                    <div class="items">
+                        {{#each this.food}}
+                        {{#if this.food}}
+                            <div>
+                                <a data-tooltip="{{this.item.name}} x{{this.qty}}" data-action="consumeAction" data-actor="{{../id}}" data-value="{{this.id}}"><img src="{{this.item.img}}" class="gold-icon" width="48" height="48"/></a><br>
+                                <span>x{{this.qty}}</span>
+                            </div>
+                        {{/if}}
+                        {{/each}}
+                    </div>
+                </td>
+                {{/each}}
+            </tr>
+            {{/if}}
+
+            <tr>
+                <th>Épuisement</th>
+                {{#each players}}                
+                <td>
+                    <div class="choices">
+                        <a class="choice{{#if this.exhaustion}} active-choice{{/if}}" data-action="chooseExhaustionAction" data-actor="{{this.id}}">Donner</a>
+                    </div>
+                </td>
+                {{/each}}
+            </tr>
+
+        </table>
+        <div>
+            <button data-action="closeAction">Valider</button>
+        </div>
+    </div>    
+</div>

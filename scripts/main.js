@@ -4,6 +4,7 @@ import { QuickAttackApp } from './quick-attack-app.js';
 import { QuickDamageApp } from './quick-damage-app.js';
 import { BuyServiceApp } from "./buy-service-app.js";
 import { JulMerchantSheet } from './merchant-sheet.js';
+import { RestsApp } from "./rests-app.js";
 
 /*
 Midi QOL :
@@ -458,6 +459,7 @@ Hooks.once("ready", () => {
    let m = game.modules.get("juls-dnd-tools");
    m.julQuickAttack = julQuickAttack;
    m.julQuickDamage = julQuickDamage;
+   m.julRests = julRests;
 });
 
 Hooks.on("dnd5e.preRollAttackV2", (context, rollConfig) => {
@@ -772,6 +774,16 @@ async function julQuickAttack(attackerToken, targetToken)
 
    // Créer et afficher l'application
    const app = new QuickAttackApp(attackerToken, targetToken);
+   app.render(true);  // Afficher l'application
+}
+
+/**
+ * Fonction pour démarrer l'application de repos
+ */
+function julRests()
+{
+   // Créer et afficher l'application
+   const app = new RestsApp();
    app.render(true);  // Afficher l'application
 }
 

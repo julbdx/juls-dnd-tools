@@ -198,6 +198,14 @@
     padding: 4px;
   }
 
+  .dtjul-window .oneline {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.3em;
+  }
+
   .dtjul-window .active-choice {
     opacity: 1;
   }
@@ -324,12 +332,38 @@
     height: 32px;
   }
 
+  .dtjul-rests-app .actors img,
   .dtjul-buy-app .buy img,
   .dtjul-quick-attack-app .big-icon {
     min-width: 48px;
     min-height: 48px;
     width: 48px;
     height: 48px;
+  }
+
+  .dtjul-rests-app .rest-options .selected img {
+    border: 1px solid crimson;
+    box-shadow: crimson 0 0 8px;
+  }
+
+  .dtjul-rests-app .rest-options td {
+    text-align: center;
+  }
+
+  .dtjul-rests-app .items {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.2em;
+  }
+
+  .dtjul-rests-app table td {
+    border-left: 1px solid #888;
+  }
+
+  .dtjul-rests-app .not-resting {
+    opacity: 0.6;
   }
 
   .dtjul-quick-attack-app .canceled {
@@ -363,6 +397,7 @@
     padding: 4px 0;
   }
 
+  .dtjul-rests-app .status,
   .dtjul-quick-attack-app .status img {
     border: 0;
     border-radius: 0;
