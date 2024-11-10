@@ -4,6 +4,7 @@ import { QuickAttackApp } from './quick-attack-app.js';
 import { QuickDamageApp } from './quick-damage-app.js';
 import { BuyServiceApp } from "./buy-service-app.js";
 import { JulMerchantSheet } from './merchant-sheet.js';
+import { JulCombatSystem } from './combat-system.js';
 import { RestsApp } from "./rests-app.js";
 
 /*
@@ -64,8 +65,7 @@ Hooks.once("init", () => {
          // Pour chaque devise, on remplace le symbole par le nom complet
          for (const [key, value] of Object.entries(CONFIG.DND5E.currencies))
          {
-            amountStr = amountStr.replace(key, ' <i class="currency ' + key + '" data-tooltip="' + value.label + '"></i>');
-            console.log(value);
+            amountStr = amountStr.replace(key, ' <i class="currency ' + key + '" data-tooltip="' + value.label + '"></i>');            
          }
 
          // Créer un élément HTML interactif
@@ -460,6 +460,7 @@ Hooks.once("ready", () => {
    m.julQuickAttack = julQuickAttack;
    m.julQuickDamage = julQuickDamage;
    m.julRests = julRests;
+   m.julCombatSystem = new JulCombatSystem();
 });
 
 Hooks.on("dnd5e.preRollAttackV2", (context, rollConfig) => {

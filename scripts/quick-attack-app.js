@@ -26,7 +26,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
             changeBonusAction: QuickAttackApp.changeBonus,
             itemInfoAction: QuickAttackApp.itemInfo,
             effectToogleAction: QuickAttackApp.effectToogle,
-            nextRoundAction: QuickAttackApp.nextRound,
+            nextTurnAction: QuickAttackApp.nextTurn,
         }
     };
 
@@ -786,7 +786,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
      * @param {*} event 
      * @param {*} target 
      */
-    static async nextRound(event, target)
+    static async nextTurn(event, target)
     {
         // On avance l'initiative et on ferme la fenêtre
         const combat = game.combat;

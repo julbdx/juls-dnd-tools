@@ -9,10 +9,11 @@
       "flags": {}
     }
   ],
-  "version": "1.1.0",
+  "version": "2.0.0",
   "socket": true,
   "esmodules": [
     "scripts/merchant-sheet.js",
+    "scripts/combat-system.js",
     "scripts/quick-damage-app.js",
     "scripts/quick-attack-app.js",
     "scripts/buy-service-app.js",
@@ -32,7 +33,7 @@
   "url": "https://github.com/julbdx/juls-dnd-tools",
   "bugs": "https://github.com/julbdx/juls-dnd-tools/issues",
   "changelog": "https://raw.githubusercontent.com/julbdx/juls-dnd-tools/main/module.json",
-  "download": "https://github.com/julbdx/juls-dnd-tools/releases/download/1.1.0/juls-dnd-tools.zip",
+  "download": "https://github.com/julbdx/juls-dnd-tools/releases/download/2.0.0/juls-dnd-tools.zip",
   "manifest": "https://raw.githubusercontent.com/julbdx/juls-dnd-tools/main/module.json",
   "readme": "https://raw.githubusercontent.com/julbdx/juls-dnd-tools/main/README.md",
   "id": "juls-dnd-tools",
@@ -47,9 +48,9 @@
         "id": "dnd5e",
         "type": "system",
         "compatibility": {
-          "minimum": "3",
-          "verified": "3.0.0",
-          "maximum": "4.1.0.0"
+          "minimum": "4",
+          "verified": "4.0.0",
+          "maximum": "4.2.0.0"
         }
       }
     ]
