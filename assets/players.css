@@ -4,10 +4,13 @@
     pointer-events: none !important;
 }
 
+.sheet-body .currency > *, 
 .dnd5e2 .tab-inventory .currency > * {    
     pointer-events: none !important;
 }
 
+.sheet-body .inventory .item-quantity > *, 
+.sheet-body .inventory .item-uses > *, 
 .dnd5e2 .tab-inventory .item-quantity > *,
 .dnd5e2 .tab-inventory .item-uses > *
  {

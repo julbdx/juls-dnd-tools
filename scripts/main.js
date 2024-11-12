@@ -414,7 +414,7 @@ Hooks.once("init", () => {
 });
 
 Hooks.once("ready", () => {
-
+   // Si le joueur est le MJ   
    if (game.user.isGM === true) {
       document.addEventListener("keypress", (e) => {
          if (
@@ -428,6 +428,7 @@ Hooks.once("ready", () => {
    }
    else
    {
+      // Si le joueur n'est pas MJ
       // On grise certaines parties de la fiche de personnage
       const linkElement = document.createElement("link");
       linkElement.rel = "stylesheet";

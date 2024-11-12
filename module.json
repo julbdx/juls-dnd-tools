@@ -32,10 +32,10 @@
   ],
   "url": "https://github.com/julbdx/juls-dnd-tools",
   "bugs": "https://github.com/julbdx/juls-dnd-tools/issues",
-  "changelog": "https://raw.githubusercontent.com/julbdx/juls-dnd-tools/main/module.json",
+  "changelog": "https://github.com/julbdx/juls-dnd-tools/releases",
   "download": "https://github.com/julbdx/juls-dnd-tools/releases/download/2.0.0/juls-dnd-tools.zip",
-  "manifest": "https://raw.githubusercontent.com/julbdx/juls-dnd-tools/main/module.json",
-  "readme": "https://raw.githubusercontent.com/julbdx/juls-dnd-tools/main/README.md",
+  "manifest": "https://github.com/julbdx/juls-dnd-tools/releases/latest/download/module.json",
+  "readme": "https://github.com/julbdx/juls-dnd-tools/releases/latest/download/README.md",
   "id": "juls-dnd-tools",
   "compatibility": {
     "minimum": "12",

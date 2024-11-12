@@ -502,6 +502,10 @@
   top: -12px;
 }
 
+.dtjul-merchant .buyer_portrait:hover img {
+  border: crimson 2px solid;
+}
+
 .dtjul-merchant .buyer_portrait img {
   border-radius: 50%;
   background: #444;

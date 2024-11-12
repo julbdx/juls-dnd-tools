@@ -80,7 +80,13 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
       })
   
       Handlebars.registerHelper('lootsheetprice', function (basePrice, modifier) {
-        return (Math.round(basePrice * modifier * 100) / 100).toLocaleString('en')
+        let proposition = (Math.round(basePrice.value * modifier * 100) / 100).toLocaleString('en');
+        if (basePrice.denomination == 'cp')
+        {
+          // arrondi à l'entier supérieur
+          proposition = Math.ceil(proposition);
+        }
+        return proposition;
       })
     
       Handlebars.registerHelper('lootsheetweight', function (weight) {
@@ -117,33 +123,52 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
       {
         priceModifier = 1.0;
         await this.actor.setFlag(JulMerchantSheet.FLAG, 'priceModifier', priceModifier);
-      }      
-  
-      let selectedRollTable = await this.actor.getFlag(JulMerchantSheet.FLAG, 'rolltable')
-  
-      let clearInventory = await this.actor.getFlag(JulMerchantSheet.FLAG, 'clearInventory')
-  
+      }
+      
+      let decoteModifier = await this.actor.getFlag(JulMerchantSheet.FLAG, 'decoteModifier')
+      if (typeof decoteModifier !== 'number')
+      {
+        decoteModifier = 0.5;
+        await this.actor.setFlag(JulMerchantSheet.FLAG, 'decoteModifier', decoteModifier);
+      }   
+    
       let itemQty = await this.actor.getFlag(JulMerchantSheet.FLAG, 'itemQty')
   
       let itemQtyLimit = await this.actor.getFlag(JulMerchantSheet.FLAG, 'itemQtyLimit')
   
       let shopQty = await this.actor.getFlag(JulMerchantSheet.FLAG, 'shopQty')
-        
-      sheetData.selectedRollTable = selectedRollTable;
+              
       sheetData.itemQty = itemQty;
       sheetData.itemQtyLimit = itemQtyLimit;
       sheetData.shopQty = shopQty;
-      sheetData.clearInventory = clearInventory;
+      
       sheetData.priceModifier = priceModifier;
-      sheetData.rolltables = game.tables.contents;
-      // console.log(game.tables);      
+      sheetData.decoteModifier = decoteModifier;
+
+      let modifier = Math.round((priceModifier - 1) * 100, 2);
+      if (modifier > 0) sheetData.formatedPriceModifier = '+' + modifier; else sheetData.formatedPriceModifier = modifier;
+
+      modifier = Math.round((decoteModifier - 1) * 100, 2);
+      if (modifier > 0) sheetData.formatedDecoteModifier = '+' + modifier; else sheetData.formatedDecoteModifier = modifier;
+
       sheetData.system.currency = JulMerchantSheet.convertCurrencyFromObject(
         sheetData.system.currency,
       );
 
-      sheetData.buyer = game.user.character;
+      if (!this.currentBuyer)
+      {
+        //this.currentBuyer = game.user.character;
+        if (!this.currentBuyer)
+        {
+          // Toujours pas de buyer, on affiche une boite de dialogue pour 
+          // demander au joueur de choisir un personnage qu'il controle
+          await this.chooseBuyer();
+        }
+      }
+
+      sheetData.buyer = this.currentBuyer;
       sheetData.buyerFunds = JulMerchantSheet.convertCurrencyFromObject(
-        game.user.character?.system.currency ?? [],
+        this.currentBuyer?.system.currency ?? [],
       );
         
       sheetData.myPortrait = this.token?.texture?.src ?? this.actor.prototypeToken.texture?.src;
@@ -180,22 +205,10 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
         }
 
         // Price Modifier
-        html.find('.price-modifier').click((ev) => this._priceModifier(ev))
-  
-        html.find('.merchant-settings').change((ev) => this._merchantSettingChange(ev))
-        html.find('.update-inventory').click((ev) => this._merchantInventoryUpdate(ev))
-        html.find('.clear-inventory.slide-toggle').click((ev) => this._clearInventoryChange(ev))
-  
-        const selectRollTable = document.getElementById('lootsheet-rolltable')
-        const buttonUpdateInventory = document.getElementById('update-inventory')
-  
-        if (selectRollTable) {
-          buttonUpdateInventory.disabled = !selectRollTable.value
-          selectRollTable.addEventListener('change', function () {
-            // Enable the button only if the selected value is not blank
-            buttonUpdateInventory.disabled = !selectRollTable.value
-          })
-        }
+        html.find('.price-modifier').click((ev) => this._priceModifier(ev));  
+
+        // Buyer Modifier
+        html.find('.choose-buyer').click((ev) => this.chooseBuyer());  
       }
     
       // Buy Item
@@ -256,254 +269,8 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
         this._sellItem(event);
         return false;
       });
-    }
-  
-    /* -------------------------------------------- */
-  
-    /**
-     * Handle merchant settings change
-     * @private
-     */
-    async _merchantSettingChange(event) {
-      event.preventDefault()
-      // console.log("Loot Sheet | Merchant settings changed");
-  
-      const moduleNamespace = JulMerchantSheet.FLAG
-      const expectedKeys = [
-        'rolltable',
-        'shopQty',
-        'itemQty',
-        'itemQtyLimit',
-        // 'clearInventory',
-        'itemOnlyOnce',
-      ]
-  
-      let targetKey = event.target.name.split('.')[3]      
-      if (expectedKeys.indexOf(targetKey) === -1) {
-        // console.log(`Loot Sheet | Error changing stettings for "${targetKey}".`);
-        return ui.notifications.error(`Error changing stettings for "${targetKey}".`)
-      }
-  
-      if (targetKey == 'clearInventory' || targetKey == 'itemOnlyOnce') {
-        //console.log(targetKey + ' set to ' + event.target.checked)
-        await this.actor.setFlag(moduleNamespace, targetKey, event.target.checked)
-      } else if (event.target.value) {
-        //console.log(targetKey + ' set to ' + event.target.value)
-        await this.actor.setFlag(moduleNamespace, targetKey, event.target.value)
-      } else {
-        //console.log(targetKey + ' set to ' + event.target.value)
-        await this.actor.unsetFlag(moduleNamespace, targetKey, event.target.value)
-      }
-    }
-  
-    /**
-     * Handle clear inventory settings change
-     * @private
-     */
-    async _clearInventoryChange(event) {
-      // Prevent default behavior of label-click that directly interacts with the checkbox
-      event.preventDefault()
-  
-      const clickedElement = $(event.currentTarget)
-  
-      // Find the checkbox and icon within the label
-      const checkbox = clickedElement.find('input[type="checkbox"]')[0]
-      const icon = clickedElement.find('i')[0]
-  
-      // Toggle the checkbox checked state
-      checkbox.checked = !checkbox.checked
-  
-      // Update the icon class based on the checkbox state
-      if (checkbox.checked) {
-        icon.classList.remove('fa-toggle-off')
-        icon.classList.add('fa-toggle-on')
-      } else {
-        icon.classList.remove('fa-toggle-on')
-        icon.classList.add('fa-toggle-off')
-      }
-  
-      // console.log("Loot Sheet | ClearInventory Changed");
-  
-      await this.actor.setFlag(JulMerchantSheet.FLAG, 'clearInventory', checkbox.checked)
-    }
-  
-    /* -------------------------------------------- */
-  
-    /**
-     * Handle merchant inventory update
-     * @private
-     */
-    async _merchantInventoryUpdate(event, html) {
-      event.preventDefault()
-  
-      const moduleNamespace = JulMerchantSheet.FLAG
-      const rolltableName = this.actor.getFlag(moduleNamespace, 'rolltable')
-      const shopQtyFormula = this.actor.getFlag(moduleNamespace, 'shopQty') || '1'
-      const itemQtyFormula = this.actor.getFlag(moduleNamespace, 'itemQty') || '1'
-      const itemQtyLimit = this.actor.getFlag(moduleNamespace, 'itemQtyLimit') || '0'
-      const clearInventory = this.actor.getFlag(moduleNamespace, 'clearInventory')
-      const itemOnlyOnce = this.actor.getFlag(moduleNamespace, 'itemOnlyOnce')
-      const reducedVerbosity = false;
-  
-      let shopQtyRoll = new Roll(shopQtyFormula)
-  
-      await shopQtyRoll.evaluate()
-      // console.log("Adding ${shopQtyRoll.result} items.");
-      let rolltable = game.tables.getName(rolltableName)
-      if (!rolltable) {
-        return ui.notifications.error(`No Rollable Table found with name "${rolltableName}".`)
-      }
-  
-      if (itemOnlyOnce) {
-        if (rolltable.results.length < shopQtyRoll.result) {
-          return ui.notifications.error(
-            `Cannot create a merchant with ${shopQtyRoll.result} unqiue entries if the rolltable only contains ${rolltable.results.length} items`,
-          )
-        }
-      }
-  
-      if (clearInventory) {
-        let currentItems = this.actor.items.map((i) => i.id);
-        await this.actor.deleteEmbeddedDocuments('Item', currentItems);
-      }
-  
-      // console.log(`Loot Sheet | Adding ${shopQtyRoll.result} new items`);
-  
-      for (let i = 0; i < shopQtyRoll.result; i++) {
-        const rollResult = await rolltable.roll()
-        let itemToAdd = null
-  
-        if (rollResult.results[0].documentCollection === 'Item') {
-          itemToAdd = game.items.get(rollResult.results[0].documentId)
-        } else {
-          // Try to find it in the compendium
-          const items = game.packs.get(rollResult.results[0].documentCollection)
-          itemToAdd = await items.getDocument(rollResult.results[0].documentId)
-        }
-        if (!itemToAdd || itemToAdd === null) {
-          return ui.notifications.error(`No item found "${rollResult.results[0].documentId}".`)
-        }
-  
-        if (itemToAdd.type === 'spell') {
-          itemToAdd = await Item5e.createScrollFromSpell(itemToAdd)
-        }
-  
-        let itemQtyRoll = new Roll(itemQtyFormula)
-        await itemQtyRoll.evaluate()
-  
-        //console.log(itemQtyRoll.total);
-        // console.log(
-        //   `Loot Sheet | Adding ${itemQtyRoll.total} x ${itemToAdd.name}`
-        // );
-  
-        let existingItem = this.actor.items.find((item) => item.name == itemToAdd.name)
-  
-        if (existingItem === undefined) {
-          // console.log(`Loot Sheet | ${itemToAdd.name} does not exist.`);
-  
-          const createdItems = await this.actor.createEmbeddedDocuments('Item', [
-            itemToAdd.toObject(),
-          ])
-          let newItem = createdItems[0]
-  
-          if (itemQtyLimit > 0 && Number(itemQtyLimit) < Number(itemQtyRoll.total)) {
-            await newItem.update({
-              'system.quantity': itemQtyLimit,
-            })
-            if (!reducedVerbosity)
-              ui.notifications.info(`Added new ${itemQtyLimit} x ${itemToAdd.name}.`)
-          } else {
-            await newItem.update({
-              'system.quantity': itemQtyRoll.total,
-            })
-            if (!reducedVerbosity)
-              ui.notifications.info(`Added new ${itemQtyRoll.total} x ${itemToAdd.name}.`)
-          }
-        } else {
-          // console.log(
-          //   `Loot Sheet | Item ${itemToAdd.name} exists.`,
-          //   existingItem
-          // );
-          // console.log("existingqty", existingItem.system.quantity);
-          // console.log("toadd", itemQtyRoll.total);
-          let newQty = Number(existingItem.system.quantity) + Number(itemQtyRoll.total)
-          //console.log("newqty", newQty);
-  
-          if (itemQtyLimit > 0 && Number(itemQtyLimit) === Number(existingItem.system.quantity)) {
-            if (!reducedVerbosity)
-              ui.notifications.info(
-                `${itemToAdd.name} already at maximum quantity (${itemQtyLimit}).`,
-              )
-          } else if (itemQtyLimit > 0 && Number(itemQtyLimit) < Number(newQty)) {
-            let updateItem = {
-              _id: existingItem.id,
-              data: {
-                quantity: itemQtyLimit,
-              },
-            }
-            await this.actor.updateEmbeddedDocuments('Item', [updateItem])
-            if (!reducedVerbosity)
-              ui.notifications.info(
-                `Added additional quantity to ${itemToAdd.name} to the specified maximum of ${itemQtyLimit}.`,
-              )
-          } else {
-            let updateItem = {
-              _id: existingItem.id,
-              system: {
-                quantity: newQty,
-              },
-            }
-            //console.log(updateItem);
-            await this.actor.updateEmbeddedDocuments('Item', [updateItem])
-  
-            if (!reducedVerbosity)
-              ui.notifications.info(
-                `Added additional ${itemQtyRoll.total} quantity to ${existingItem.name}.`,
-              )
-          }
-        }
-      }
-    }
-  
-    _createRollTable() {
-      let type = 'weapon'
-  
-      game.packs.map((p) => p.collection)
-  
-      const pack = game.packs.find((p) => p.collection === 'dnd5e.items')
-  
-      let i = 0
-  
-      let output = []
-  
-      pack.getIndex().then((index) =>
-        index.forEach(function (arrayItem) {
-          var x = arrayItem._id
-          i++
-          pack.getEntity(arrayItem._id).then((packItem) => {
-            if (packItem.type === type) {
-              let newItem = {
-                _id: packItem._id,
-                flags: {},
-                type: 1,
-                text: packItem.name,
-                img: packItem.img,
-                collection: 'Item',
-                resultId: packItem._id,
-                weight: 1,
-                range: [i, i],
-                drawn: false,
-              }
-  
-              output.push(newItem)
-            }
-          })
-        }),
-      )
-  
-      return
-    }
-
+    }  
+      
     /**
      * Handle sell item
      * @param {*} event 
@@ -512,47 +279,46 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
     async _sellItem(event, all = 0) {
       event.preventDefault();
   
-      if (this.token === null) {
-        return ui.notifications.error(`You must sell items to a token.`);
+      let buyer = this.actor;
+      if (!buyer || !buyer.prototypeToken.actorLink) {  // Si le marchand est un template alors on ne peut pas acheter directement 
+        return ui.notifications.error(`You must sell items to a token.`)
       }
-  
-      if (!game.user.character) {
-        // console.log("Loot Sheet | No active character for user");
-        return ui.notifications.error(`No active character for user.`);
-      }
+
       // event est un DropEvent, on va chercher la donnée qu'il transporte
       let data = JSON.parse(event.originalEvent.dataTransfer.getData('text/plain'));
       if (!data) return;
       
       // On cherche l'item par son UUID
       let item = await Item.implementation.fromDropData(data);      
-     
-      const sellerModifier = 0.5;  // Rachat à moitié de la valeur ?
+
+      // On regarde si l'item est un item de la liste d'inventaire du buyer
+      // Sinon, on le refuse au motif que ce vendeur n'accepte pas de reprendre un objet qu'il ne vend pas !
+      if (!buyer.items.find(i => i.name === item.name)) {
+        return ui.notifications.error(`Ce marchand n'accepte pas de reprendre votre objet, il ne vend pas ce genre de marchandise !`);
+      }
+      
+      let seller = item.parent;
+      if (!seller)
+        return ui.notifications.error(`Impossible de déterminer le vendeur de l'objet !`);
+
+      // On vérifie que l'utilisateur actuel est bien le propriétaire de l'actor seller
+      if (!seller.isOwner)
+        return ui.notifications.error(`Cet objet n'est pas à vous, vous ne pouvez pas le vendre !`);
+
+      const sellerModifier = buyer.getFlag(JulMerchantSheet.FLAG, 'decoteModifier') ?? 1;
+
       const price = (item.system.price.value * sellerModifier * 100) / 100;
       const itemCostDenomination = item.system.price.denomination;
 
       const proceed = await foundry.applications.api.DialogV2.confirm({
-        title: `Vendre un objet à ${this.token.name}`,
-        content: `<p>Vous allez vendre 1x ${item.name} pour ${price}${itemCostDenomination} à ${this.token.name}.</p>`,
+        title: `Vendre un objet à ${buyer.name}`,
+        content: `<p>Vous allez vendre 1x ${item.name} pour ${price}${itemCostDenomination} à ${buyer.name}.</p>`,
         modal: true,
         rejectClose: false,
       });
 
-      if (proceed) {
-        const data = {
-          tokenId: this.token.id,
-          sellerId: item.parent.id,
-          itemId: item.id,
-          quantity: 1,
-        }
-
-        let seller = game.actors.get(data.sellerId);
-        let buyer = canvas.tokens.get(data.tokenId)?.actor;
-
-        if (buyer && seller) {
-          this.transaction(seller, buyer, data.itemId, data.quantity, sellerModifier);
-        }
-      }      
+      if (proceed)
+          this.transaction(seller, buyer, item.id, 1, sellerModifier);      
     }
   
     /* -------------------------------------------- */
@@ -563,35 +329,22 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
      */
     _buyItem(event, all = 0) {
       event.preventDefault()
-      // console.log("Loot Sheet | Buy Item clicked");      
-  
-      if (this.token === null) {
+ 
+      let seller = this.actor;
+      if (!seller || !seller.prototypeToken.actorLink) {  // Si le marchand est un template alors on ne peut pas acheter directement 
         return ui.notifications.error(`You must purchase items from a token.`)
-      }
-      // console.log(game.user.character);
-      if (!game.user.character) {
-        // console.log("Loot Sheet | No active character for user");
-        return ui.notifications.error(`No active character for user.`)
-      }
+      }      
   
       const itemId = $(event.currentTarget).parents('.item').attr('data-item-id')
-        
-      const data = {
-        buyerId: game.user.character._id,
-        tokenId: this.token.id,
-        itemId: itemId,
-        quantity: 1,
-      }
 
       /** gestion de la vente ici ! */
-      let buyer = game.actors.get(data.buyerId);
-      let seller = canvas.tokens.get(data.tokenId)?.actor;
-
-      if (buyer && seller)
-      {
-          let sellerModifier = seller.getFlag(JulMerchantSheet.FLAG, 'priceModifier');
-          this.transaction(seller, buyer, data.itemId, data.quantity, sellerModifier);  
+      let buyer = this.currentBuyer;
+      if (!buyer) {
+        return ui.notifications.error(`No buyer selected.`);
       }
+
+      let sellerModifier = seller.getFlag(JulMerchantSheet.FLAG, 'priceModifier');
+      this.transaction(seller, buyer, itemId, 1, sellerModifier);  
     }
 
     /**
@@ -606,6 +359,9 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
     async transaction(seller, buyer, itemId, quantity, sellerModifier) {
       let sellItem = seller.getEmbeddedDocument('Item', itemId);
   
+      if (!sellItem)
+        return ui.notifications.error(`Item not found in seller inventory.`)
+
       // If the buyer attempts to buy more then what's in stock, buy all the stock.
       if (sellItem.system.quantity < quantity) {
         quantity = sellItem.system.quantity;
@@ -630,21 +386,13 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
   
       itemCostRaw *= quantity;
   
-      // console.log("itemCostRaw", itemCostRaw);
-      // console.log("itemCostDenomination", itemCostDenomination);
-  
       let buyerFunds = foundry.utils.duplicate(
         JulMerchantSheet.convertCurrencyFromObject(buyer.system.currency),
       );
   
       let sellerFunds = foundry.utils.duplicate(
         JulMerchantSheet.convertCurrencyFromObject(seller.system.currency),
-      );
-  
-      // console.log("sellerFunds before", sellerFunds);
-      // console.log("buyerFunds before purchase", buyerFunds);
-      //maybe realize later
-      let blockCurencies = ['ep']
+      );      
   
       const conversionRates = {
         pp: 1000,
@@ -652,14 +400,7 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
         ep: 50,
         sp: 10,
         cp: 1,
-      }
-  
-      const compensationCurrency = {
-        pp: 'gp',
-        gp: 'sp',
-        ep: 'sp',
-        sp: 'cp',
-      }
+      }  
   
       let convert = (funds) => {
         let wallet = 0
@@ -834,11 +575,7 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
         });
     }
 
-    async moveItems(source, destination, items) {
-      // console.log(source);
-      // console.log(destination);
-      // console.log(items);
-  
+    async moveItems(source, destination, items) { 
       const updates = []
       const deletes = []
       const additions = []
@@ -849,10 +586,7 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
         let itemId = i.itemId
         let quantity = i.quantity
         let item = source.getEmbeddedDocument('Item', itemId)
-  
-        // console.log("ITEM: \n");
-        // console.log(item);
-  
+    
         // Move all items if we select more than the quantity.
         if (item.system.quantity < quantity) {
           quantity = item.system.quantity
@@ -947,28 +681,16 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
       event.preventDefault()
   
       let priceModifier = await this.actor.getFlag(JulMerchantSheet.FLAG, 'priceModifier')
-      if (typeof priceModifier !== 'number') priceModifier = 1.0
-  
-      priceModifier = Math.round(priceModifier * 100)
-  
-      const maxModifier = 500;
-  
-      var html =
-        "<p>Use this slider to increase or decrease the price of all items in this inventory. <i class='fa fa-question-circle' title='This uses a percentage factor where 100% is the current price, 0% is 0, and 200% is double the price.'></i></p>"
-      html +=
-        '<p><input name="price-modifier-percent" id="price-modifier-percent" type="range" min="0" max="' +
-        maxModifier +
-        '" value="' +
-        priceModifier +
-        '" class="slider"></p>'
-      html +=
-        '<p><label>Percentage:</label> <input type=number min="0" max="' +
-        maxModifier +
-        '" value="' +
-        priceModifier +
-        '" id="price-modifier-percent-display"></p>'
-      html +=
-        '<script>var pmSlider = document.getElementById("price-modifier-percent"); var pmDisplay = document.getElementById("price-modifier-percent-display"); pmDisplay.value = pmSlider.value; pmSlider.oninput = function() { pmDisplay.value = this.value; }; pmDisplay.oninput = function() { pmSlider.value = this.value; };</script>'
+      if (typeof priceModifier !== 'number') priceModifier = 1.0 ;
+      priceModifier = Math.round(priceModifier * 100);
+
+      let decoteModifier = await this.actor.getFlag(JulMerchantSheet.FLAG, 'decoteModifier')
+      if (typeof decoteModifier !== 'number') decoteModifier = 1.0  
+      decoteModifier = Math.round(decoteModifier * 100);
+   
+      let html = "";
+      html += '<p><label>Tarifs (pourcentage):</label> <input type=number min="0" max="500" value="' + priceModifier + '" id="price-modifier-percent"></p>';
+      html += '<p><label>Décote (pourcentage):</label> <input type=number min="0" max="100" value="' + decoteModifier + '" id="decote-modifier-percent"></p>';
   
       let d = new Dialog({
         title: 'Price Modifier',
@@ -977,21 +699,17 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
           one: {
             icon: '<i class="fas fa-check"></i>',
             label: 'Update',
-            callback: () =>
-              this.actor.setFlag(
-                JulMerchantSheet.FLAG,
-                'priceModifier',
-                document.getElementById('price-modifier-percent').value / 100,
-              ),
+            callback: () => {
+              this.actor.setFlag(JulMerchantSheet.FLAG, 'priceModifier', document.getElementById('price-modifier-percent').value / 100);
+              this.actor.setFlag(JulMerchantSheet.FLAG, 'decoteModifier', document.getElementById('decote-modifier-percent').value / 100);
+            }
           },
           two: {
             icon: '<i class="fas fa-times"></i>',
             label: 'Cancel',
-            callback: () => console.log('Loot Sheet | Price Modifier Cancelled'),
           },
         },
         default: 'two',
-        close: () => console.log('Loot Sheet | Price Modifier Closed'),
       })
       d.render(true)
     }
@@ -1147,6 +865,56 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
       let loot = {}
       loot.players = playerData
       context.flags.loot = loot
+    }
+
+    /**
+     * Fait apparaitre une modaldialog pour que le joueur puisse sélectionner
+     * le personnage joueur qui va acheter les objets chez ce marchand.
+     * La fenêtre propose un bouton par token de personnage joueur présent que le joueur
+     * actuel peut contrôler
+     */
+    async chooseBuyer()
+    {
+      // Liste des personnages pour lesquels le joueur actif a le contrôle
+      const ownedActors = game.actors.filter(actor => 
+        actor.isOwner && actor.hasPlayerOwner && (actor.type === 'character' || actor.type == 'group')
+      );
+
+      // 1 seul acteur contrôlé ? facile !
+      if (ownedActors.length === 0) {
+        ui.notifications.warn("Vous ne contrôlez aucun personnage joueur.");
+        return;
+      }
+      else if (ownedActors.length === 1)
+      {
+        this.currentBuyer = ownedActors[0];
+        return;
+      }
+  
+      // Créer les boutons pour chaque personnage
+      let selected = await new Promise((resolve, reject) => {
+        let buttons = {};
+        ownedActors.forEach(actor => {
+          buttons[actor.id] = {
+            label: actor.name,
+            callback: () => resolve(actor)
+          };
+        });
+
+        // Présenter la boîte de dialogue modale
+        new Dialog({
+          title: "Sélectionnez un personnage",
+          content: "<p>Choisissez l'un de vos personnages pour l'achat des marchandises :</p>",
+          buttons: buttons,
+          close: () => resolve(null)
+        }).render(true);        
+      });
+
+      if (selected)
+      {
+        this.currentBuyer = selected;      
+        this.render();
+      }
     }
   }
   

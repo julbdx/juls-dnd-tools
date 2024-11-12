@@ -53,8 +53,8 @@
                 type="button"
                 class="price-modifier gold-button"
                 name="price-modifier"
-                data-tooltip="{{localize 'LOOTSHEET.PriceModifier'}}"
-                aria-label="{{localize 'LOOTSHEET.PriceModifier'}}"
+                data-tooltip="Configurer le marchand"
+                aria-label="Configurer le marchand"
               >
                 <i class="fa fa-balance-scale"></i>
               </button>
@@ -69,91 +69,6 @@
 
   <section class="sheet-body">
     <div class="main-content">
-      {{#if @root.editable}}
-      <div class="sidebar">        
-        <div class="pills-group merchant-settings">
-          <h3 class="icon" data-tooltip="{{localize 'LOOTSHEET.MerchantSettingsInfo'}}">
-            <i class="fas fa-balance-scale"></i>
-            <span class="roboto-upper">{{localize 'LOOTSHEET.MerchantSettings'}}</span>
-          </h3>
-          <div>
-            <div class="flexrow">
-              <select
-                class="sheet-rolltable"
-                id="lootsheet-rolltable"
-                name="system.flags.lootsheet-simple.rolltable"
-              >
-                <!-- Placeholder option -->
-                <option value="" disabled>{{localize 'LOOTSHEET.RollableTable'}}</option>
-
-                <!-- Loop through rolltables -->
-                {{#each rolltables as |table|}}
-                <option value="{{
-                  table.name
-                }}"
-                {{#if (eq table.name ../selectedRollTable)}}selected{{/if}}>
-                {{
-                  table.name
-                }}
-
-                {{/each}}
-              </select>
-            </div>
-            <div class="flexrow">
-              <input name="system.flags.lootsheet-simple.shopQty" type="text" data-dtype="String"
-              placeholder="{{localize "LOOTSHEET.ShopFormula"}} e.g. 1d20" value="{{ shopQty }}" />
-            </div>
-            <div class="flexrow">
-              <input name="system.flags.lootsheet-simple.itemQty" type="text" data-dtype="String"
-              placeholder="{{localize "LOOTSHEET.ItemFormula"}} e.g. 1d4" value="{{ itemQty }}" />
-            </div>
-            <div class="flexrow">
-              <input name="system.flags.lootsheet-simple.itemQtyLimit" type="text"
-              data-dtype="String" placeholder="{{localize "LOOTSHEET.LimitQty"}} e.g. 10" value="{{
-                itemQtyLimit
-              }}" />
-            </div>
-
-            <div class="flexrow" style="margin-top: 0.5rem; margin-bottom: 0.5rem">
-              <label
-                class="clear-inventory slide-toggle"
-                name="system.flags.lootsheet-simple.clearInventory"
-              >
-                <input
-                  type="checkbox"
-                  name="system.flags.lootsheet-simple.clearInventory"
-                  {{
-                  checked
-                  clearInventory
-                  }}
-                />
-                {{#if clearInventory}}
-                {{localize "LOOTSHEET.ClearInventory"}}
-                <i class="fas fa-toggle-on"></i>
-                {{else}}
-                {{localize "LOOTSHEET.ClearInventory"}}
-                <i class="fas fa-toggle-off"></i>
-                {{/if}}
-              </label>
-            </div>
-          </div>
-
-          <div class="flexrow">
-            <button
-              type="button"
-              class="update-inventory"
-              type="update-inventory"
-              name="update-inventory"
-              id="update-inventory"
-              disabled
-            >
-              <i class="fas fa-balance-scale"></i> {{localize "LOOTSHEET.UpdateShop"}}
-            </button>
-          </div>
-        </div>
-      </div>
-      {{/if}}
-
       <section class="tab-body">
         <div
           class="tab inventory active {{@root.editable}}"
@@ -318,7 +233,7 @@
                         data-tooltip="{{ item.system.price.value }}{{ item.system.price.denomination }}"
                       >
                         {{#if item.system.price.value}}
-                        {{ lootsheetprice item.system.price.value ../../priceModifier }}
+                        {{ lootsheetprice item.system.price ../../priceModifier }}
                         <i class="currency {{ item.system.price.denomination }}"></i>
                         {{/if}}
                       </div>
@@ -391,9 +306,9 @@
               {{!-- Encumbrance --}}
               {{#if buyer}}
               <div class="encumbrance" style="background: var(--dnd5e-color-parchment); ">
-                <div class="buyer_portrait">
+                <a class="buyer_portrait choose-buyer">
                   <img src="{{ buyer.img }}" alt="{{ buyer.name }}" width="48" height="48"/>
-                </div>
+                </a>
                 <section class="currency" style="display: flex; flex-direction: row; align-items: center; padding: 0.7ex 1em 0.7ex 1em; margin-left: 48px;">
                     <strong style="display: block;">{{ buyer.name }}</strong>
                     <div style="display: block;"> : </div>
@@ -404,6 +319,11 @@
                     data-tooltip="{{ lookup (lookup @root.config.currencies @key) 'label' }}"
                     ></i>
                     {{/each}}
+
+                    |
+                    <div>Tarifs&nbsp;: {{formatedPriceModifier}}%</div>
+                    |
+                    <div>Décote: {{formatedDecoteModifier}}%</div>
                 </section>
               </div>
               {{/if}}

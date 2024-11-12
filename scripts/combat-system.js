@@ -185,6 +185,8 @@ export class JulCombatSystem
 
             // Crée le contenu HTML de la fenêtre de dialogue avec trois colonnes
             let dialogContent = `
+                <div class="dnd5e chat-card">
+                <div class="card-content">
                 <form>
                     <div class="form-group">
                         <label for="playlist-select"><strong>Choisissez la playlist de combat :</strong></label>
@@ -204,10 +206,9 @@ export class JulCombatSystem
                         <div>
                             <strong>Hostile</strong><br>
                             ${hostileCheckboxes}
-                        </div>
-                        <div style="clear: both;"></div>
+                        </div>                        
                     </div>
-                </form>`;
+                </form></div></div>`;
 
             // Fonction pour gérer la soumission de la fenêtre
             let submitHandler = html => {
@@ -224,7 +225,7 @@ export class JulCombatSystem
             // Crée et affiche la fenêtre de dialogue
             new Dialog({
                 title: "Selection des adversaires du combat",
-                content: dialogContent,
+                content: dialogContent,                
                 buttons: {
                     ok: {
                         icon: "<i class='fas fa-check'></i>",
@@ -234,6 +235,9 @@ export class JulCombatSystem
                 },
                 default: "ok",
                 close: () => resolve([]) // Résout avec un tableau vide si la fenêtre est fermée
+            }, 
+            {
+                classes: ["dnd5e"],
             }).render(true);
         });
     }
