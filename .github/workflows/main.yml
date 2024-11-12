@@ -1,0 +1,36 @@
+name: Release Module
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the repository code
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # Zip the module contents
+      - name: Create ZIP Archive
+        run: |
+          zip -r juls-dnd-tools.zip . -x ".git/*" -x ".github/*"
+          
+      # Upload release assets
+      - name: Upload Release Assets
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./juls-dnd-tools.zip
+          asset_name: juls-dnd-tools.zip
+          asset_content_type: application/zip
+
+      - name: Upload module.json
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./module.json
+          asset_name: module.json
+          asset_content_type: application/json
