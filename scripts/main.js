@@ -1,5 +1,3 @@
-import constants from "../Constants.js";
-import { registerSettings } from "./settings.js";
 import { QuickAttackApp } from './quick-attack-app.js';
 import { QuickDamageApp } from './quick-damage-app.js';
 import { BuyServiceApp } from "./buy-service-app.js";
