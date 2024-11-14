@@ -2,29 +2,8 @@
   <header class="sheet-header" style="background-image: url({{ actor.img }})">
     <div class="left">
       <div class="portrait">
-        {{!-- Portrait --}}
-        {{#if editable}}
-        <label class="slide-toggle">
-          <input
-            type="checkbox"
-            name="flags.dnd5e.showTokenPortrait"
-            {{
-            checked
-            portrait.token
-            }}
-          />
-          {{#if portrait.token}}
-          {{ localize "DOCUMENT.Token" }}
-          <i class="fas fa-toggle-on"></i>
-          {{else}}
-          {{ localize "DND5E.Portrait" }}
-          <i class="fas fa-toggle-off"></i>
-          {{/if}}
-        </label>
-        {{/if}}
-        
         {{#if (and editable portrait.path)}}
-            <img src="{{ portrait.path }}" alt="{{ actor.name }}"data-edit="{{ portrait.path }}">
+            <img src="{{ portrait.src }}" alt="{{ actor.name }}" data-edit="{{ portrait.src }}">
         {{^}}
             <img src="{{ myPortrait }}" alt="{{ actor.name }}">
         {{/if}}
@@ -150,7 +129,10 @@
                     {{ localize "DND5E.Quantity" }}
                   </div>
                   <div class="item-header item-price">
-                    {{ localize "DND5E.Price" }}
+                    (Vente)
+                  </div>
+                  <div class="item-header item-price">
+                    Achat
                   </div>
 
                   <div class="item-header item-controls"></div>
@@ -238,7 +220,19 @@
                         {{^}}
                           <div class="item-detail">{{#if item.system.quantity}}{{item.system.quantity }}{{^}}SOLD OUT{{/if}}</div>
                         {{/if}}
+                      </div>
 
+                      {{!-- Item Price --}}
+                      <div
+                        class="item-detail item-price {{#unless item.system.price.value}}empty{{/unless}}"
+                        data-tooltip="{{ item.system.price.value }}{{ item.system.price.denomination }}"
+                      >
+                        {{#if item.system.price.value}}
+                        <em>(
+                        {{ lootsheetprice item.system.price ../../decoteModifier }}
+                        <i class="currency {{ item.system.price.denomination }}"></i>
+                        {{/if}}
+                        )</em>
                       </div>
 
                       {{!-- Item Price --}}

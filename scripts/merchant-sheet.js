@@ -81,10 +81,10 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
   
       Handlebars.registerHelper('lootsheetprice', function (basePrice, modifier) {
         let proposition = (Math.round(basePrice.value * modifier * 100) / 100).toLocaleString('en');
-        if (basePrice.denomination == 'cp')
+        //if (basePrice.denomination == 'cp')
         {
           // arrondi à l'entier supérieur
-          proposition = Math.ceil(proposition);
+          proposition = Math.round(proposition);
         }
         return proposition;
       })
@@ -167,7 +167,8 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
         this.currentBuyer?.system.currency ?? [],
       );
         
-      sheetData.myPortrait = this.token?.texture?.src ?? this.actor.prototypeToken.texture?.src;
+      sheetData.myPortrait = this.token?.texture?.src ?? this.actor.prototypeToken.texture?.src ?? null;
+      console.log(sheetData.portrait);
   
       // Return data for rendering
       return sheetData;
@@ -250,24 +251,26 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
         }
       }
 
-      // Désactiver le drag & drop dans la liste d'inventaire
-      html.find('.item-list .item').each((i, item) => {
-        item.setAttribute('draggable', false); // Désactiver la capacité de faire un drag
-        $(item).on('dragstart', (event) => {
-            event.preventDefault(); // Empêche le comportement de drag & drop
-        });            
-      });
+      // Désactiver le drag & drop dans la liste d'inventaire      
+      if (this._mode == 1) {
+        html.find('.item-list .item').each((i, item) => {
+          item.setAttribute('draggable', false); // Désactiver la capacité de faire un drag
+          $(item).on('dragstart', (event) => {
+              event.preventDefault(); // Empêche le comportement de drag & drop
+          });            
+        });
 
-      // Gestion de la vente !
-      html.find('.item-list').on('drop', (event) => {
-        this._sellItem(event);
-        return false;
-      });
+        // Gestion de la vente !
+        html.find('.item-list').on('drop', (event) => {
+          this._sellItem(event);
+          return false;
+        });
 
-      html.find('.inventory-element').on('drop', (event) => {
-        this._sellItem(event);
-        return false;
-      });
+        html.find('.inventory-element').on('drop', (event) => {
+          this._sellItem(event);
+          return false;
+        });
+      }
     }  
       
     /**
