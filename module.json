@@ -1,15 +1,15 @@
 {
   "title": "Jul's tools",
-  "description": "Add a few QOL functionality to DND5e system",
+  "description": "Add a few QOL functionalities to DND5e system",
   "authors": [
     {
-      "name": "Julien Vissaux",
+      "name": "Julien VISSAUX",
       "email": "julien@skouat.net",
       "url": "https://github.com/julbdx",
       "flags": {}
     }
   ],
-  "version": "2.0.0",
+  "version": "2.1.0",
   "socket": true,
   "esmodules": [
     "scripts/merchant-sheet.js",

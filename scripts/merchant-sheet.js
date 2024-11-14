@@ -130,18 +130,14 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
       {
         decoteModifier = 0.5;
         await this.actor.setFlag(JulMerchantSheet.FLAG, 'decoteModifier', decoteModifier);
-      }   
-    
-      let itemQty = await this.actor.getFlag(JulMerchantSheet.FLAG, 'itemQty')
-  
-      let itemQtyLimit = await this.actor.getFlag(JulMerchantSheet.FLAG, 'itemQtyLimit')
-  
-      let shopQty = await this.actor.getFlag(JulMerchantSheet.FLAG, 'shopQty')
-              
-      sheetData.itemQty = itemQty;
-      sheetData.itemQtyLimit = itemQtyLimit;
-      sheetData.shopQty = shopQty;
+      }
       
+      let opened = await this.actor.getFlag(JulMerchantSheet.FLAG, 'opened');
+      if (typeof opened !== 'boolean')
+        opened = true;
+
+      sheetData.opened = opened;    
+      sheetData.gmopened = opened || game.user.isGM;
       sheetData.priceModifier = priceModifier;
       sheetData.decoteModifier = decoteModifier;
 
@@ -206,6 +202,9 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
 
         // Price Modifier
         html.find('.price-modifier').click((ev) => this._priceModifier(ev));  
+
+        // Toggle Open/Close
+        html.find('.store-opening').click((ev) => { ev.preventDefault(); this.toggleOpenClose()});  
 
         // Buyer Modifier
         html.find('.choose-buyer').click((ev) => this.chooseBuyer());  
@@ -713,6 +712,32 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
       })
       d.render(true)
     }
+
+    /**
+     * Toggle store open or close
+     */
+    async toggleOpenClose() {
+      let opened = await this.actor.getFlag(JulMerchantSheet.FLAG, 'opened');
+      if (typeof opened !== 'boolean') opened = false;
+      // toggle the value
+      opened = !opened;
+      // store value
+      await this.actor.setFlag(JulMerchantSheet.FLAG, 'opened', opened);
+
+      // update the overlay
+      const token = this.token;
+      if (token)
+      {
+        const overlayPath = "icons/svg/padlock.svg";
+        if (!opened) {
+            await token.update({ overlayEffect: overlayPath });
+        } else {
+            await token.update({ overlayEffect: null });
+        }
+      }
+
+      this.render();
+    }
   
     
     /* -------------------------------------------- */
@@ -783,20 +808,7 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
       // Save updated player permissions
       const lootPermissions = new DocumentOwnershipConfig(this.actor)
       lootPermissions._updateObject(event, currentPermissions)
-    }
-  
-    /* -------------------------------------------- */
-  
-    /**
-     * Organize and classify Items for Loot NPC sheets
-     * @private
-     */
-    // _prepareItems(context) {
-    //   super._prepareItems(context);
-    // }
-    _prepareItems(context) {
-      super._prepareItems(context)
-    }
+    }  
   
     /* -------------------------------------------- */
   
