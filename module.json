@@ -9,7 +9,7 @@
       "flags": {}
     }
   ],
-  "version": "2.1.1",
+  "version": "2.1.2",
   "socket": true,
   "esmodules": [
     "scripts/merchant-sheet.js",
@@ -33,7 +33,7 @@
   "url": "https://github.com/julbdx/juls-dnd-tools",
   "bugs": "https://github.com/julbdx/juls-dnd-tools/issues",
   "changelog": "https://github.com/julbdx/juls-dnd-tools/releases",
-  "download": "https://github.com/julbdx/juls-dnd-tools/releases/download/2.0.0/juls-dnd-tools.zip",
+  "download": "https://github.com/julbdx/juls-dnd-tools/releases/download/2.1.2/juls-dnd-tools.zip",
   "manifest": "https://github.com/julbdx/juls-dnd-tools/releases/latest/download/module.json",
   "readme": "https://github.com/julbdx/juls-dnd-tools/releases/latest/download/README.md",
   "id": "juls-dnd-tools",
