@@ -158,7 +158,16 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
         {
           // Toujours pas de buyer, on affiche une boite de dialogue pour 
           // demander au joueur de choisir un personnage qu'il controle
-          await this.chooseBuyer();
+          // sauf s'il n'en contrôle qu'un !
+          // Liste des personnages pour lesquels le joueur actif a le contrôle
+          const ownedActors = game.actors.filter(actor => 
+            actor.isOwner && actor.hasPlayerOwner && (actor.type === 'character')
+          );
+
+          if (ownedActors.length === 1)
+            this.currentBuyer = ownedActors[0];
+          else
+            await this.chooseBuyer();
         }
       }
 
