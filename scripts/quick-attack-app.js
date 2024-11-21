@@ -1,3 +1,5 @@
+import { SelectorTokenApp } from './select-token.js';
+
 // Classe qui gère l'interface des attaques rapides avec ApplicationV2
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api
 
@@ -27,6 +29,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
             itemInfoAction: QuickAttackApp.itemInfo,
             effectToogleAction: QuickAttackApp.effectToogle,
             nextTurnAction: QuickAttackApp.nextTurn,
+            chooseTokenAction: QuickAttackApp.chooseToken,
         }
     };
 
@@ -39,16 +42,27 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
     constructor(attackerToken, targetToken) {
         super();
         
+        this.isReaction = false;
         this.attackerToken = attackerToken;
         this.targetToken = targetToken;        
         this.init();
+
+        // Vu que cette fenêtre est réservée aux attaques des monstres, 
+        // si l'attaquant actuel est un joueur, alors on est en réaction
+        // et on doit choisir un nouvel attaquant
+        if (this.attackerToken.actor.hasPlayerOwner)
+        {
+            this.isReaction = true;
+            // workaround pour avoir le front et le focus
+            setTimeout(() => this.chooseAttacker(), 1000);            
+        }
     }
 
     /**
      * Initialisation
      */
     init()
-    {
+    {        
         this.attackResults = [];
         this.attacks = [];
         this.damages = [];
@@ -148,7 +162,10 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
      */
     get title()
     {
-        return `Attaque rapide de «${this.attackerToken.name}» sur «${this.targetToken.name}»`;
+        if (this.isReaction)
+            return `Réaction`;
+        else
+            return `Attaque rapide`;
     }
 
     /**
@@ -788,19 +805,93 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
      */
     static async nextTurn(event, target)
     {
-        // On avance l'initiative et on ferme la fenêtre
+        // Si nous étions en réaction, on ferme la fenêtre
+        if (this.isReaction)
+        {
+            // Mais avant, on donne l'effet 'réaction' au token en cours. Cet effet est un effet DFredConvenientEffects
+            // qui permet de savoir qu'il a déjà joué sa réaction
+            // toggleStatusEffet ne fonctionne donc pas
+            // Récupérer l'effet "Reaction"
+            const effectName = "Reaction";
+            const effectInterface = game.dfreds.effectInterface;
+            if (effectInterface) 
+            {
+                // Appliquer l'effet sur l'acteur du token
+                await effectInterface.addEffect({effectName : effectName, uuid: this.attackerToken.actor.uuid });
+            }            
+            
+            this.close();
+            return;
+        }
+
+        // Sinon on avance l'initiative
         const combat = game.combat;
         if (combat)
         {
-            const current = combat.combatant;
-            const next = combat.turns.findIndex(t => t.id == current.id) + 1;
-            if (next >= combat.turns.length)
-                await combat.nextRound();
-            else
-                await combat.update({ turn: next });
-        }
+            do
+            {
+                const current = combat.combatant;
+                const next = combat.turns.findIndex(t => t.id == current.id) + 1;
+                if (next >= combat.turns.length)
+                    await combat.nextRound();
+                else
+                    await combat.update({ turn: next });
+            } while (!combat.combatant.actor.hasPlayerOwner && combat.combatant.defeated); 
 
-        // On ferme la fenêtre 
-        this.close();
+            // On ferme la fenêtre si c'est au tour d'un joueur
+            if (combat.combatant.actor.hasPlayerOwner)
+                this.close();
+            else // sinon on réinitialise la fenêtre
+            {
+                const c = game.combat?.combatant?.token;
+                // On cherche le token de l'acteur dont c'est le tour
+                if (c)
+                    this.attackerToken = canvas.tokens.get(c._id);
+                this.init();
+            }
+        }            
+    }
+
+    /**
+     * Transaction
+     * 
+     * @param {*} event 
+     * @param {*} target 
+     */
+    static chooseToken(event, target)
+    {
+        const mode = target.dataset.mode;
+        
+        switch (mode)
+        {
+            case 'attacker': this.chooseAttacker(); break;
+            case 'target': this.chooseTarget(); break;
+        }
+    }
+
+    /**
+     * 
+     */
+    async chooseAttacker()
+    {
+      const selectedToken = await SelectorTokenApp.selectToken({ filterOption: "ennemies", distanceToken: this.targetToken });
+      if (selectedToken)
+      {
+        this.attackerToken = selectedToken;
+        this.init();
+      }      
+    }
+
+    /**
+     * 
+     */
+    async chooseTarget()
+    {
+      const selectedToken = await SelectorTokenApp.selectToken({ filterOption: "players", distanceToken: this.attackerToken });
+      if (selectedToken)
+      {
+        this.targetToken = selectedToken;
+        this.init();
+      }      
     }
 }

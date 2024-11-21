@@ -1,3 +1,5 @@
+import { SelectorTokenApp } from './select-token.js';
+
 export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 {
     static FLAG = 'juls-dnd-tools';
   
@@ -177,7 +179,6 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
       );
         
       sheetData.myPortrait = this.token?.texture?.src ?? this.actor.prototypeToken.texture?.src ?? null;
-      console.log(sheetData.portrait);
   
       // Return data for rendering
       return sheetData;
@@ -899,46 +900,12 @@ export class JulMerchantSheet extends dnd5e.applications.actor.ActorSheet5eNPC2 
      */
     async chooseBuyer()
     {
-      // Liste des personnages pour lesquels le joueur actif a le contrôle
-      const ownedActors = game.actors.filter(actor => 
-        actor.isOwner && actor.hasPlayerOwner && (actor.type === 'character' || actor.type == 'group')
-      );
-
-      // 1 seul acteur contrôlé ? facile !
-      if (ownedActors.length === 0) {
-        ui.notifications.warn("Vous ne contrôlez aucun personnage joueur.");
-        return;
-      }
-      else if (ownedActors.length === 1)
+      const selectedToken = await SelectorTokenApp.selectToken({ filterOption: "players" });
+      if (selectedToken && selectedToken.actor)
       {
-        this.currentBuyer = ownedActors[0];
-        return;
-      }
-  
-      // Créer les boutons pour chaque personnage
-      let selected = await new Promise((resolve, reject) => {
-        let buttons = {};
-        ownedActors.forEach(actor => {
-          buttons[actor.id] = {
-            label: actor.name,
-            callback: () => resolve(actor)
-          };
-        });
-
-        // Présenter la boîte de dialogue modale
-        new Dialog({
-          title: "Sélectionnez un personnage",
-          content: "<p>Choisissez l'un de vos personnages pour l'achat des marchandises :</p>",
-          buttons: buttons,
-          close: () => resolve(null)
-        }).render(true);        
-      });
-
-      if (selected)
-      {
-        this.currentBuyer = selected;      
+        this.currentBuyer = selectedToken.actor;
         this.render();
-      }
+      }      
     }
   }
   

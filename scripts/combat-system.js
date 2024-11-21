@@ -125,7 +125,7 @@ export class JulCombatSystem
      * Obtient tous les tokens ennemis à proximité des tokens alliés
      * @param {*} distance 
      */
-    async getNearTokens(distance = 6)
+    async getNearTokens(distance = 9)
     {    
         // Récupère tous les tokens sur la scène
         const allTokens = canvas.tokens.placeables.filter(t => t.actor && t.actor.type != 'group');
@@ -140,8 +140,12 @@ export class JulCombatSystem
         friendlyTokens.forEach(friendlyToken => {
             hostileTokens.forEach(hostileToken => {
                 // Si la distance est inférieure ou égale à la distance de sélection, ajoute le token à la liste
-                if (canvas.grid.measureDistance(friendlyToken, hostileToken) <= distance) {
-                    nearTokens.push(hostileToken);
+                if (canvas.grid.measurePath([friendlyToken.center, hostileToken.center]).distance <= distance) {
+                    // Vérifier la ligne de vue en tenant compte des murs
+                    const obstacles = CONFIG.Canvas.polygonBackends.sight.testCollision(hostileToken.center, friendlyToken.center, { type: "sight" });
+                    if (obstacles.length == 0) {
+                        nearTokens.push(hostileToken);
+                    }
                 }
             });
         });

@@ -2,6 +2,8 @@
     <!-- des radio de -5 à +5 -->
     <div class="two-columns">
         <div class="features" style="max-width: 30%;">
+            {{attacker.document.name}}
+            <hr>
             <table>
             {{#each features}}
                 <tr>
@@ -18,7 +20,7 @@
         </div>
         <div class="attcks" style="flex-grow: 1;">
             <div class="header">        
-                <div class="portrait">
+                <div class="portrait" data-action="chooseTokenAction" data-mode="attacker">
                     <img class="gold-icon" src="{{attacker.document.texture.src}}" width="64" height="64" data-tooltip="{{attacker.document.name}}" />
                 </div>
                 {{#each attackerStatuses}}
@@ -40,12 +42,12 @@
                     </a>
                 </div>
                 {{/each}}
-                <div class="portrait">
+                <div class="portrait" data-action="chooseTokenAction" data-mode="target">
                     <img class="gold-icon" src="{{target.document.texture.src}}" width="64" height="64" data-tooltip="{{target.document.name}}"/>
                 </div>        
             </div>
 
-            <table>
+            <table>                
                 {{#each attacks}}
                 <tr>
                     <td><img class="big-icon gold-icon" src="{{this.item.img}}" /></td>
@@ -159,7 +161,7 @@
                         <tr>
                             <td></td>
                             <td><strong>Total&nbsp;dégâts</strong></td>
-                            <td><strong>{{totalDamage}}</strong></td>
+                            <td><strong class="total-damages">{{totalDamage}}</strong></td>
                         </tr>
                         <tr>
                             <td></td>

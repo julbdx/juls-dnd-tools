@@ -408,9 +408,25 @@
     border-radius: 4px;
   }
 
+  .dtjul-quick-attack-app .total-damages {
+    font-size: 140%;
+    color: crimson;
+  }
+
   /* ajouter un filtre rouge à l'image */
   .dtjul-quick-attack-app .delete-status img {
     filter: brightness(0.5) saturate(0) hue-rotate(180deg);
+  }
+
+  /* les portraits de cette fenêtre sont sélectionnables */
+  .dtjul-quick-attack-app .portrait
+  {
+    cursor: pointer;
+  }
+
+  .dtjul-quick-attack-app .portrait:hover img
+  {
+    border: 2px solid #eee;
   }
 
 
@@ -523,4 +539,59 @@
 
 .random-table td {
   border-top: 1px solid #888;
+}
+
+
+.dtjul-token-selector-app .token-selector-grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.dtjul-token-selector-app .token-selector-grid .token-select .token-name {
+  text-align: center;
+  margin-top: 0.5ex;
+  font-weight: bold;
+}
+
+.dtjul-token-selector-app .token-selector-grid .token-select {
+  position: relative;
+  padding: 1ex 1em;
+  cursor: pointer;
+  border: 1px solid transparent;
+  opacity: 0.8;
+}
+
+.dtjul-token-selector-app .token-selector-grid .token-select img {
+  border: 0;
+}
+
+.dtjul-token-selector-app .token-selector-grid .token-select:hover {
+  border: 1px solid #888;
+  opacity: 1;
+}
+
+.dtjul-token-selector-app .token-distance {
+  color: #444;
+  font-style: italic;
+}
+
+.dtjul-window .token-statuses {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;  
+  gap: 4px;
+  margin: 1ex 1em;
+}
+
+.dtjul-window .token-status img {
+  border-radius: 50%;
+  border: 1px solid #aaa;
+  background: #666;
 }
