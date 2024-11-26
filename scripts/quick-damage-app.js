@@ -19,6 +19,7 @@ export class QuickDamageApp extends HandlebarsApplicationMixin(ApplicationV2) {
             changeSavingThrowEffectAction: QuickDamageApp.changeSavingThrowEffect,
             changeNbAttacksAction: QuickDamageApp.changeNbAttacks,
             applyDamageAction: QuickDamageApp.applyDamage,
+            missedAction: QuickDamageApp.missed,
             addDamageAction: QuickDamageApp.addDamage,
         }
     };
@@ -253,6 +254,26 @@ export class QuickDamageApp extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     /**
+     * Loupé !
+     * 
+     * @param {*} event 
+     * @param {*} target 
+     */
+    static async missed(event, target)
+    {
+        const table = game.tables.getName(`Manqué !`);
+        // si la table existe
+        if (table)
+        {
+            // On détermine le message avec un tirage
+            await table.draw();           
+        }
+
+        // On ferme la fenêtre 
+        this.close();
+    }
+
+    /**
      * Appliquer les dommages à la cible
      * 
      * @param {*} event 
@@ -261,6 +282,8 @@ export class QuickDamageApp extends HandlebarsApplicationMixin(ApplicationV2) {
     static async applyDamage(event, target)
     {
         // On fait un résumé des dégâts dans une chatcard diffusée par le jeton :
+        let deadBy = null;
+
         for (let t = 0; t < this.targetTokens.length; t++) {
             const token = this.targetTokens[t];
             let chatContent = `<strong>Dommages</strong><br>`;
@@ -360,6 +383,19 @@ export class QuickDamageApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 if (!token.actor.hasPlayerOwner) {                
                     await token.actor.toggleStatusEffect("dead");
                 }
+
+                // Si la créature est morte
+                if (token.actor.system.attributes.hp.value <= 0)
+                {
+                    for (let j = 0; j < this.damages.length; j++)
+                    {
+                        let d = this.damages[j].value;
+                        if (d)
+                        {
+                            deadBy = this.damages[j].type;
+                        }
+                    }
+                }
             }
             else
             {
@@ -404,10 +440,33 @@ export class QuickDamageApp extends HandlebarsApplicationMixin(ApplicationV2) {
                     speaker: ChatMessage.getSpeaker({ token: token.document }),
                     content: chatContent,        
                 };
-                ChatMessage.create(chatData);
+                ChatMessage.create(chatData);                
             }
         };
         
+        // On tire au hasard une fin tragique pour notre token dans le chat
+        if (deadBy)
+        {
+            // Déjà, on indique que le token est mort dans le chat, en reprenant son nom
+            let chatData = {
+                user: game.user._id,
+                speaker: ChatMessage.getSpeaker({ token: token.document }),
+                content: `<strong>${token.name}</strong> est mort${token.actor.hasPlayerOwner ? 'e' : ''} !`,                
+            };
+            ChatMessage.create(chatData);  
+
+            // Ce texte est contenu dans une table aléatoire qui porte le nom de "Mises à mort - <type de dégât>"
+            // le type de dégât doit être écrit avec la première lettre en majuscule
+            const damageType = deadBy.charAt(0).toUpperCase() + deadBy.slice(1);
+            const table = game.tables.getName(`Mises à mort - ${damageType}`);
+            // si la table existe
+            if (table)
+            {
+                // On détermine le message avec un tirage
+                await table.draw();           
+            }
+        }
+
         // On ferme la fenêtre 
         this.close();
     }

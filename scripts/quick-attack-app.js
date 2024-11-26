@@ -307,10 +307,6 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                     let rolls = [];
                     this.attackResults[i].damageFormula.forEach(f => {
                         let formula = f.formula;
-                        // Si c'est un critique, on double le nombre de dés lancé
-                        // On cherche le pattern XdY et on double X avant d'écrire la nouvelle formule
-                        if (critic)
-                            formula = formula.replace(/(\d+)d(\d+)/g, (match, p1, p2) => (parseInt(p1) * 2) + 'd' + p2);
                         
                         // Injection du type de dégâts derrière les dés
                         formula = formula.replace(/d(\d+)/, 'd$1[' + f.damageType + ']');
@@ -332,20 +328,63 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
                     // Montrons les jets de dé tous en même temps !
                     rolls.forEach(r => r.roll.toMessage({rollMode: "roll"})); // On affiche le jet de dé;
-
                     
                     this.attackResults[i].damage = rolls;
-
-                    this.attackResults[i].totalDamage = 0;
-                    this.attackResults[i].damage.forEach(d => {
-                        this.attackResults[i].totalDamage += d.roll.total;
-                    });
                 }
+
+                if (critic && !this.attackResults[i].damageCrit)
+                {
+                    // On tire les dégâts pour chaque formule de dégâts
+                    let rolls = [];
+                    this.attackResults[i].damageFormula.forEach(f => {
+                        let formula = f.formula;
+                        // C'est un critique, on ne garde donc que les dés
+                        // 14d6 + 2d4 + 4 + 8 => 14d6 + 2d4
+                        formula = formula.replace(/(\d+d\d+)(\s*[+-]\s*\d+)?/g, '$1');                        
+
+                        // Injection du type de dégâts derrière les dés
+                        formula = formula.replace(/d(\d+)/, 'd$1[' + f.damageType + ']');
+
+                        console.log(formula);                                                
+
+                        if (formula && formula != '')
+                        {
+                            let weapon = this.attackResults[i].weapon;
+                            //let id = weapon.id + '-' + f.damageType;    // pour regrouper les dégâts par type
+                            let id = i + '-' + f.damageType;              // pour ne pas regrouper les dégâts
+                            rolls.push({
+                                id: id,
+                                name: weapon.name + ' n°' + (i+1),
+                                type: f.damageType,
+                                roll: new Roll(formula),
+                            });
+                        }
+                        else
+                            rolls.push(null);
+                    });
+
+                    // Lançons les dés
+                    for (let j = 0; j < rolls.length; j++)
+                        if (rolls[j])
+                            await rolls[j].roll.roll();
+
+                    // Montrons les jets de dé tous en même temps !
+                    rolls.forEach((r) => { if (r) r.roll.toMessage({rollMode: "roll"}); }); // On affiche le jet de dé;
+
+                    this.attackResults[i].damageCrit = rolls;
+                }
+
+                this.attackResults[i].totalDamage = 0;
+                this.attackResults[i].damage.forEach(d => { this.attackResults[i].totalDamage += d.roll.total; });
+                if (this.attackResults[i].critic)
+                    this.attackResults[i].damageCrit.forEach(d => { this.attackResults[i].totalDamage += d.roll.total; });
 
                 let concentrationDD = 0;
 
                 // Calcul des dommages totaux
-                this.attackResults[i].damage.forEach(d => {
+                for (let j = 0; j < this.attackResults[i].damage.length; j++)
+                {
+                    const d = this.attackResults[i].damage[j];
                     if (!damages[d.id])
                         damages[d.id] = {
                             id: d.id,
@@ -366,7 +405,9 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                         };
 
                     // Calcul des dommages réels
-                    damages[d.id].total += d.roll.total;                    
+                    damages[d.id].total += d.roll.total;
+                    if (this.attackResults[i].critic && this.attackResults[i].damageCrit[j])
+                        damages[d.id].total += this.attackResults[i].damageCrit[j].roll.total;
 
                     // Calcul des flags
                     damages[d.id].normal = false;
@@ -390,7 +431,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                     }
 
                     const realDmg = this.targetToken.actor.calculateDamage( [ {
-                        value: d.roll.total, 
+                        value: damages[d.id].total, 
                         type: d.type,
                         properties: this.attackResults[i].weapon.system.properties, 
                     } ]); 
@@ -413,12 +454,12 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                     else if (damages[d.id].active == 1)
                     {
                         damages[d.id].reduced = 'full';
-                        computedRealDmg = d.roll.total; 
+                        computedRealDmg = damages[d.id].total; 
                     }
                     else if (damages[d.id].active == 2)
                     {
                         damages[d.id].reduced = 'resistance';
-                        computedRealDmg = d.roll.total / 2.0; 
+                        computedRealDmg = damages[d.id].total / 2.0; 
                     }
                     else
                     {
@@ -432,7 +473,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                         damages[d.id].nb = 1;
                         damages[d.id].take += computedRealDmg;
                     }
-                });
+                }
 
                 let concentrationcheck = Math.floor(concentrationDD / 2);
                 if (concentrationcheck < 10)
@@ -667,6 +708,8 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
             damageFormula: weapon.labels.damages,
             totalDamage: 0,
             damage: null,
+            damageCrit: null,
+            critic: false,
             active: true,
             success: false,
         });
