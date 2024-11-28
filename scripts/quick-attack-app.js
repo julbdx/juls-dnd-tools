@@ -385,6 +385,9 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 for (let j = 0; j < this.attackResults[i].damage.length; j++)
                 {
                     const d = this.attackResults[i].damage[j];
+                    if (!d.type)
+                        d.type = 'piercing';    // par défaut
+                    
                     if (!damages[d.id])
                         damages[d.id] = {
                             id: d.id,

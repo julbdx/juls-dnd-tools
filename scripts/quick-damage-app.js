@@ -442,30 +442,30 @@ export class QuickDamageApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 };
                 ChatMessage.create(chatData);                
             }
-        };
         
-        // On tire au hasard une fin tragique pour notre token dans le chat
-        if (deadBy)
-        {
-            // Déjà, on indique que le token est mort dans le chat, en reprenant son nom
-            let chatData = {
-                user: game.user._id,
-                speaker: ChatMessage.getSpeaker({ token: token.document }),
-                content: `<strong>${token.name}</strong> est mort${token.actor.hasPlayerOwner ? 'e' : ''} !`,                
-            };
-            ChatMessage.create(chatData);  
-
-            // Ce texte est contenu dans une table aléatoire qui porte le nom de "Mises à mort - <type de dégât>"
-            // le type de dégât doit être écrit avec la première lettre en majuscule
-            const damageType = deadBy.charAt(0).toUpperCase() + deadBy.slice(1);
-            const table = game.tables.getName(`Mises à mort - ${damageType}`);
-            // si la table existe
-            if (table)
+            // On tire au hasard une fin tragique pour notre token dans le chat
+            if (deadBy)
             {
-                // On détermine le message avec un tirage
-                await table.draw();           
+                // Déjà, on indique que le token est mort dans le chat, en reprenant son nom
+                let chatData = {
+                    user: game.user._id,
+                    speaker: ChatMessage.getSpeaker({ token: token.document }),
+                    content: `<strong>${token.name}</strong> est mort${token.actor.hasPlayerOwner ? 'e' : ''} !`,                
+                };
+                ChatMessage.create(chatData);  
+
+                // Ce texte est contenu dans une table aléatoire qui porte le nom de "Mises à mort - <type de dégât>"
+                // le type de dégât doit être écrit avec la première lettre en majuscule
+                const damageType = deadBy.charAt(0).toUpperCase() + deadBy.slice(1);
+                const table = game.tables.getName(`Mises à mort - ${damageType}`);
+                // si la table existe
+                if (table)
+                {
+                    // On détermine le message avec un tirage
+                    await table.draw();           
+                }
             }
-        }
+        };
 
         // On ferme la fenêtre 
         this.close();
