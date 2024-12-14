@@ -339,7 +339,12 @@ export class JulCombatSystem
         }
 
         // On liste les tokens
-        let opponents = combat.combatants.filter(c => c.token.disposition === -1 && !c.defeated && !c.actor.effects.has("dnd5eincapacitat")); 
+        let opponents = combat.combatants.filter(
+                            c => c.token.disposition === -1 && 
+                            !c.defeated &&                             
+                            !c.actor.effects.has("dnd5edead") && 
+                            !c.actor.effects.has("dnd5eincapacited")
+                        ); 
         
         // On vérifie que le combat n'est pas terminé
         if (opponents.length === 0)
