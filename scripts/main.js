@@ -792,7 +792,7 @@ function julRests()
  * 
  * @param {} target 
  */
-async function julQuickDamage(targetsTokens, defaultDamage = 'force')
+async function julQuickDamage(targetsTokens, defaultDamage = 'force', totalDamage = 0)
 {
    // Détermination de la cible
    if (!targetsTokens || targetsTokens.length == 0)
@@ -815,9 +815,94 @@ async function julQuickDamage(targetsTokens, defaultDamage = 'force')
       return;
    }
 
-   // Créer et afficher l'application
-   const app = new QuickDamageApp(targetsTokens, defaultDamage);
-   app.render(true);  // Afficher l'application
+   if (!totalDamage || totalDamage === 0)
+   {
+      // Créer et afficher l'application
+      const app = new QuickDamageApp(targetsTokens, defaultDamage);
+      app.render(true);  // Afficher l'application
+   }
+   else
+   {
+      // Application des dégâts ici !
+      // On fait un résumé des dégâts dans une chatcard diffusée par le jeton
+      for (let t = 0; t < targetsTokens.length; t++) {
+          const token = targetsTokens[t];
+          let chatContent = `<strong>Dommages</strong><br>`;                              
+          chatContent += `${totalDamage}`;
+
+          await token.actor.applyDamage( [ {
+              value: totalDamage, 
+          } ]);
+
+          // Si après, la cible est morte (pv <= 0), on lui met l'état "mort" si ce n'est pas un PJ               
+          if (token.actor.system.attributes.hp.value <= 0)
+          {
+              if (!token.actor.hasPlayerOwner) {                                  
+                  // Le personnage est vaincu !                  
+                  // Dans le combat, on le marque comme vaincu et invisible                                    
+                  if (game.combat)
+                  {
+                        const c = game.combat.getCombatantByToken(token.id);
+                        if (c)
+                        {
+                           // On met à jour le statut defeated et hidden du combatant
+                           await c.update({ defeated: true, hidden: true });                           
+                        }
+                  }
+                  
+                  // AJoute l'effet mort au token
+                  await token.actor.toggleStatusEffect("dead", { active: true, overlay: true});
+
+                  // On affiche plus les barres de vie
+                  token.document.update({ "displayBars": 0 });
+
+                  // Ping Combatant
+                  canvas.ping(token.document.object.center);
+              }
+              else
+              {
+                  await token.actor.toggleStatusEffect("prone");
+                  await token.actor.toggleStatusEffect("unconscious");
+              }
+          }
+          else
+          {
+            // On lance les jets de concentration au besoin
+            if (token.actor.statuses.has("concentrating"))
+            {
+               let dd = 10;
+               if (totalDamage / 2.0 > 10)
+                  dd = Math.ceil(totalDamage / 2.0);
+               const r = await token.actor.rollConcentration({ targetValue: dd, });
+               const score = r.total;
+               if (score < dd)
+               {
+                  // failed ! 
+                  // on retire toutes les concentrations du token
+                  let concentrationEffects = token.actor.effects.filter(eff => eff.name.toLowerCase().includes("concentr"));
+
+                  chatContent += `✖ Concentration : ${score}/${dd} : raté !`;                            
+
+                  for (let effect of concentrationEffects) {
+                        await effect.delete();
+                  }
+               }
+               else
+               {
+                  chatContent += `✔ Concentration : ${score}/${dd} : réussi !`;
+               }
+            }
+              
+              // On envoie le message
+              let chatData = {
+                  user: game.user._id,
+                  speaker: ChatMessage.getSpeaker({ token: token.document }),
+                  content: chatContent,        
+              };
+              ChatMessage.create(chatData);                
+          }             
+      };
+   }
 }   
 
 async function handleMoneyTransaction(amount, transactionName) {

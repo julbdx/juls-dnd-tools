@@ -381,7 +381,7 @@ export class QuickDamageApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 await token.actor.toggleStatusEffect("unconscious");
                 
                 if (!token.actor.hasPlayerOwner) {                
-                    await token.actor.toggleStatusEffect("dead");
+                    await token.actor.toggleStatusEffect("dead");                    
                 }
 
                 // Si la créature est morte
@@ -416,7 +416,7 @@ export class QuickDamageApp extends HandlebarsApplicationMixin(ApplicationV2) {
                             {
                                 // failed ! 
                                 // on retire toutes les concentrations du token
-                                let concentrationEffects = token.actor.effects.filter(eff => eff.name.toLowerCase().includes("concentrat"));
+                                let concentrationEffects = token.actor.effects.filter(eff => eff.name.toLowerCase().includes("concentr"));
 
                                 chatContent += `✖ Concentration : ${score}/${dd} : raté !`;                            
 
