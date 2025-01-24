@@ -4,12 +4,17 @@ export class JulCombatSystem
      * Nom pour les ennemis
      */
     hostileNames = [
-        'vif', 'furieux', 'agile', 'narquois', 'balafré', 
-        'hargneux', 'flétri', 'veiné', 'tatoué', 'serein', 
-        'sautillant', 'concentré', 'morne', 'rapide', 'hétérochrome',
-        'borgne', 'petit', 'costaud', 'frêle', 'moucheté', 
-        'dentu', 'claudiquant', 'verruqueux', 'zigzaguant', 'pustuleux'
-      ];
+        'sombre', 'brutal', 'rugueux', 'hérissé', 'grimaçant', 
+        'sanglant', 'inflexible', 'ombrageux', 'inquiétant', 'caverneux', 
+        'spectral', 'poisseux', 'enragé', 'fourbe', 'sinistre', 
+        'redoutable', 'vicieux', 'macabre', 'venimeux', 'ténébreux', 
+        'décharné', 'vénéneux', 'furieux', 'baveux', 'trompeur', 
+        'tatoué', 'farouche', 'maudit', 'cramoisi', 'fulgurant', 
+        'lugubre', 'visqueux', 'féroce', 'barbare', 'ardent'
+    ];
+
+    // Nom hostile donné
+    hostileNameGiven = 0;    
 
     /**
      * Musiques avant le combat
@@ -84,6 +89,8 @@ export class JulCombatSystem
      */
     async startCombat()
     {
+        this.hostileNameGiven = Math.floor(Math.random() * this.hostileNames.length);
+
         let result = await this.selectTokensDialog();
         const tks = result.tokens;
 
@@ -301,7 +308,8 @@ export class JulCombatSystem
                         }
                     }
 
-                    let basename = this.hostileNames[Math.floor(Math.random() * this.hostileNames.length)];
+                    this.hostileNameGiven = (this.hostileNameGiven + 1) % this.hostileNames.length;
+                    let basename = this.hostileNames[this.hostileNameGiven];
                     let name = basename;
                     let suffix = 0;
                     while (givenNames.includes(name))

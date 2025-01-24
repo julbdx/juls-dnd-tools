@@ -458,6 +458,7 @@ Hooks.once("ready", () => {
    let m = game.modules.get("juls-dnd-tools");
    m.julQuickAttack = julQuickAttack;
    m.julQuickDamage = julQuickDamage;
+   m.julQuickConcentration = julQuickConcentration;
    m.julRests = julRests;
    m.julCombatSystem = new JulCombatSystem();
 });
@@ -792,7 +793,7 @@ function julRests()
  * 
  * @param {} target 
  */
-async function julQuickDamage(targetsTokens, defaultDamage = 'force', totalDamage = 0)
+async function julQuickDamage(targetsTokens, defaultDamage = 'force', damage = 0)
 {
    // Détermination de la cible
    if (!targetsTokens || targetsTokens.length == 0)
@@ -815,7 +816,7 @@ async function julQuickDamage(targetsTokens, defaultDamage = 'force', totalDamag
       return;
    }
 
-   if (!totalDamage || totalDamage === 0)
+   if (!damage || damage === 0)
    {
       // Créer et afficher l'application
       const app = new QuickDamageApp(targetsTokens, defaultDamage);
@@ -827,12 +828,62 @@ async function julQuickDamage(targetsTokens, defaultDamage = 'force', totalDamag
       // On fait un résumé des dégâts dans une chatcard diffusée par le jeton
       for (let t = 0; t < targetsTokens.length; t++) {
           const token = targetsTokens[t];
-          let chatContent = `<strong>Dommages</strong><br>`;                              
-          chatContent += `${totalDamage}`;
 
-          await token.actor.applyDamage( [ {
-              value: totalDamage, 
-          } ]);
+          // 2. Récupérer les cartes de chat de dommages récentes (moins de 30 secondes)
+         const now = Date.now();
+         const chatMessages = game.messages.contents.filter(msg => {
+            const isDamageCard = msg.flags["jul-damage-macro"]?.type === "damage-card";
+            const isRecent = (now - msg.timestamp) < 15000; // 15 secondes
+            
+            const isToken = token.id === msg.flags["jul-damage-macro"]?.tokenId;
+            return isDamageCard && isRecent && isToken;
+         });
+
+         // 3. Calculer le total des dommages
+         let oldDamage = 0;
+         let totalDamage = damage
+         let previousCard = null;
+         if (chatMessages.length > 0) {
+            previousCard = chatMessages[chatMessages.length - 1];
+            const previousDamage = previousCard.flags["jul-damage-macro"]?.totalDamage || 0;
+            totalDamage += previousDamage;
+            oldDamage += previousDamage;
+         }
+
+         // 4. Préparer le contenu de la carte
+         const content = `
+            <div>
+               <h3>Dommages</h3>
+               <p>${totalDamage} points de dégâts infligés.</p>
+            </div>
+         `;
+
+         const chatData = {
+            user: game.user.id,
+            speaker: ChatMessage.getSpeaker({ token: token.document }),
+            content,
+            flags: {
+               "jul-damage-macro": {
+                     type: "damage-card",
+                     tokenId: token.id,
+                     totalDamage: totalDamage
+               }
+            }
+         };
+
+         // 5. Supprimer la carte précédente si elle existe
+         if (previousCard) {
+            await previousCard.delete();
+         }
+
+         // 6. Créer une nouvelle carte
+         await ChatMessage.create(chatData);
+        
+          await token.actor.applyDamage( [ { value: -oldDamage, } ]);
+          await token.actor.applyDamage( [ { value: totalDamage, } ]);
+          //await token.actor.applyDamage( [ { value: damage, } ]);
+          // Ping Combatant
+          canvas.ping(token.document.object.center);
 
           // Si après, la cible est morte (pv <= 0), on lui met l'état "mort" si ce n'est pas un PJ               
           if (token.actor.system.attributes.hp.value <= 0)
@@ -854,7 +905,7 @@ async function julQuickDamage(targetsTokens, defaultDamage = 'force', totalDamag
                   await token.actor.toggleStatusEffect("dead", { active: true, overlay: true});
 
                   // On affiche plus les barres de vie
-                  token.document.update({ "displayBars": 0 });
+                  token.document.update({ "displayBars": 0, displayName: 30 });
 
                   // Ping Combatant
                   canvas.ping(token.document.object.center);
@@ -864,46 +915,99 @@ async function julQuickDamage(targetsTokens, defaultDamage = 'force', totalDamag
                   await token.actor.toggleStatusEffect("prone");
                   await token.actor.toggleStatusEffect("unconscious");
               }
-          }
-          else
-          {
-            // On lance les jets de concentration au besoin
-            if (token.actor.statuses.has("concentrating"))
-            {
-               let dd = 10;
-               if (totalDamage / 2.0 > 10)
-                  dd = Math.ceil(totalDamage / 2.0);
-               const r = await token.actor.rollConcentration({ targetValue: dd, });
-               const score = r.total;
-               if (score < dd)
-               {
-                  // failed ! 
-                  // on retire toutes les concentrations du token
-                  let concentrationEffects = token.actor.effects.filter(eff => eff.name.toLowerCase().includes("concentr"));
-
-                  chatContent += `✖ Concentration : ${score}/${dd} : raté !`;                            
-
-                  for (let effect of concentrationEffects) {
-                        await effect.delete();
-                  }
-               }
-               else
-               {
-                  chatContent += `✔ Concentration : ${score}/${dd} : réussi !`;
-               }
-            }
-              
-              // On envoie le message
-              let chatData = {
-                  user: game.user._id,
-                  speaker: ChatMessage.getSpeaker({ token: token.document }),
-                  content: chatContent,        
-              };
-              ChatMessage.create(chatData);                
-          }             
+          }          
       };
    }
-}   
+}
+
+/**
+ * Fonction pour macro qui déclenche les jets de concentration
+ * 
+ * @param {} target 
+ */
+async function julQuickConcentration(targetsTokens)
+{
+   // Détermination de la cible
+   if (!targetsTokens || targetsTokens.length == 0)
+   {
+      targetsTokens = [];
+      // On met dans targetsToken tous les tokens targetés
+      game.user.targets.forEach(target => {
+         targetsTokens.push(target);
+      });            
+   }
+
+   // Si pas de cible, alors on prend le premier token contrôlé
+   if (!targetsTokens || targetsTokens.length == 0)
+      targetsTokens = canvas.tokens.controlled;
+   
+   // Si toujours pas de cible, on arrête avec un message d'erreur
+   if (!targetsTokens || targetsTokens.length == 0)
+   {
+      ui.notifications.error("Aucune cible n'est sélectionnée !");
+      return;
+   }
+
+   // Application des dégâts ici !
+   // On fait un résumé des dégâts dans une chatcard diffusée par le jeton
+   for (let t = 0; t < targetsTokens.length; t++) 
+   {
+      const token = targetsTokens[t];
+
+         // 2. Récupérer les cartes de chat de dommages récentes (moins de 30 secondes)
+      const now = Date.now();
+      const chatMessages = game.messages.contents.filter(msg => {
+         const isDamageCard = msg.flags["jul-damage-macro"]?.type === "damage-card";
+         const isRecent = (now - msg.timestamp) < 120000; // 2 minutes
+         const isToken = token.id === msg.flags["jul-damage-macro"]?.tokenId;
+         return isDamageCard && isRecent && isToken;
+      });
+
+      // 3. Calculer le total des dommages
+      let totalDamage = 0;
+      if (chatMessages.length > 0) {
+         let previousCard = chatMessages[chatMessages.length - 1];
+         const previousDamage = previousCard.flags["jul-damage-macro"]?.totalDamage || 0;
+         totalDamage += previousDamage;
+      }
+
+      // On lance les jets de concentration au besoin
+      if (totalDamage > 0 && token.actor.statuses.has("concentrating"))
+      {
+         let chatContent = "";
+         let dd = 10;
+         if (totalDamage / 2.0 > 10)
+            dd = Math.ceil(totalDamage / 2.0);
+         const r = await token.actor.rollConcentration({ targetValue: dd, });
+         const score = r.total;
+         if (score < dd)
+         {
+            // failed ! 
+            // on retire toutes les concentrations du token
+            let concentrationEffects = token.actor.effects.filter(eff => eff.name.toLowerCase().includes("concentr"));
+
+            chatContent += `✖ Concentration : ${score}/${dd} : raté !`;                            
+
+            for (let effect of concentrationEffects) {
+                  await effect.delete();
+            }
+         }
+         else
+         {
+            chatContent += `✔ Concentration : ${score}/${dd} : réussi !`;
+         }
+
+         // On envoie le message
+         let chatData = {
+            user: game.user._id,
+            speaker: ChatMessage.getSpeaker({ token: token.document }),
+            content: chatContent,        
+         };
+
+         ChatMessage.create(chatData);   
+      }
+   }
+}
 
 async function handleMoneyTransaction(amount, transactionName) {
    // On lance l'application d'achat de service
