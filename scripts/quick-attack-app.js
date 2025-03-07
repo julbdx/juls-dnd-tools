@@ -828,6 +828,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
         ChatMessage.create(chatData);
         
         // On avance l'initiative et on ferme la fenêtre
+        /* NON, ca fout le bordel
         const combat = game.combat;
         if (combat)
         {
@@ -837,7 +838,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 await combat.nextRound();
             else
                 await combat.update({ turn: next });
-        }
+        }*/
 
         // On ferme la fenêtre 
         this.close();
