@@ -851,12 +851,14 @@ async function julQuickDamage(targetsTokens, defaultDamage = 'force', damage = 0
          }
 
          // 4. Préparer le contenu de la carte
-         const content = `
-            <div>
+         const content = (totalDamage > 0) ? 
+            `<div>
                <h3>Dommages</h3>
                <p>${totalDamage} points de dégâts infligés.</p>
-            </div>
-         `;
+            </div>` : `<div>
+               <h3>Soins</h3>
+               <p>${totalDamage*-1} PV regagnés.</p>
+            </div>`;
 
          const chatData = {
             user: game.user.id,
@@ -878,44 +880,59 @@ async function julQuickDamage(targetsTokens, defaultDamage = 'force', damage = 0
 
          // 6. Créer une nouvelle carte
          await ChatMessage.create(chatData);
-        
-          await token.actor.applyDamage( [ { value: -oldDamage, } ]);
-          await token.actor.applyDamage( [ { value: totalDamage, } ]);
-          //await token.actor.applyDamage( [ { value: damage, } ]);
-          // Ping Combatant
-          canvas.ping(token.document.object.center);
 
-          // Si après, la cible est morte (pv <= 0), on lui met l'état "mort" si ce n'est pas un PJ               
-          if (token.actor.system.attributes.hp.value <= 0)
-          {
-              if (!token.actor.hasPlayerOwner) {                                  
-                  // Le personnage est vaincu !                  
-                  // Dans le combat, on le marque comme vaincu et invisible                                    
-                  if (game.combat)
-                  {
-                        const c = game.combat.getCombatantByToken(token.id);
-                        if (c)
-                        {
-                           // On met à jour le statut defeated et hidden du combatant
-                           await c.update({ defeated: true, hidden: true });                           
-                        }
-                  }
-                  
-                  // AJoute l'effet mort au token
+         const oldHp = token.actor.system.attributes.hp.value;
+        
+         await token.actor.applyDamage( [ { value: -oldDamage, } ]);
+         await token.actor.applyDamage( [ { value: totalDamage, } ]);
+         //await token.actor.applyDamage( [ { value: damage, } ]);
+         // Ping Combatant
+         canvas.ping(token.document.object.center);
+         
+         // Si après, la cible est morte (pv <= 0), on lui met l'état "mort" si ce n'est pas un PJ               
+         if (token.actor.system.attributes.hp.value <= 0)
+         {
+            if (!token.actor.hasPlayerOwner) 
+            {
+               // Le personnage est vaincu !
+               // Dans le combat, on le marque comme vaincu et invisible
+               if (game.combat)
+               {
+                     const c = game.combat.getCombatantByToken(token.id);
+                     if (c)
+                     {
+                        // On met à jour le statut defeated et hidden du combatant
+                        await c.update({ defeated: true, hidden: true });                           
+                     }
+               }
+               
+               // AJoute l'effet mort au token s'il ne l'a pas déjà
+               if (!token.actor.effects.find(eff => eff.statuses.has("dead")))
                   await token.actor.toggleStatusEffect("dead", { active: true, overlay: true});
 
-                  // On affiche plus les barres de vie
-                  token.document.update({ "displayBars": 0, displayName: 30 });
+               // On affiche plus les barres de vie
+               token.document.update({ "displayBars": 0, displayName: 30 });
 
-                  // Ping Combatant
-                  canvas.ping(token.document.object.center);
-              }
-              else
-              {
-                  await token.actor.toggleStatusEffect("prone");
-                  await token.actor.toggleStatusEffect("unconscious");
-              }
-          }          
+               // Ping Combatant
+               canvas.ping(token.document.object.center);
+            }
+            else
+            {
+               if (!token.actor.effects.find(eff => eff.statuses.has("prone"))) await token.actor.toggleStatusEffect("prone");
+               if (!token.actor.effects.find(eff => eff.statuses.has("unconscious"))) await token.actor.toggleStatusEffect("unconscious");
+            }
+         } 
+         else
+         {
+            if (token.actor.effects.find(eff => eff.statuses.has("prone"))) await token.actor.toggleStatusEffect("prone");
+            if (token.actor.effects.find(eff => eff.statuses.has("unconscious"))) await token.actor.toggleStatusEffect("unconscious");
+            if (token.actor.effects.find(eff => eff.statuses.has("dead"))) {
+               await token.actor.toggleStatusEffect("dead");
+               const c = game.combat.getCombatantByToken(token.id);
+               if (c)   // On met à jour le statut defeated et hidden du combatant
+                  await c.update({ defeated: false, hidden: false });                           
+            }
+         }
       };
    }
 }

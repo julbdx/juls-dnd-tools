@@ -54,7 +54,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
         {
             this.isReaction = true;
             // workaround pour avoir le front et le focus
-            setTimeout(() => this.chooseAttacker(), 1000);            
+            setTimeout(() => this.chooseAttacker(), 200);
         }
     }
 
@@ -124,33 +124,39 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
         }
 
         // Les effets de l'attaquant
-        this.attackerToken.actor.effects.forEach(eff => {
-            const s = {
-                id: eff.id,
-                token: this.attackerToken,
-                idx: this.statuses.length,
-                img: eff.img,
-                name: eff.name,
-                description: eff.description,
-                active: true,
-            };
-            this.statuses.push(s);
-            this.attackerStatuses.push(s);
+        this.attackerToken.actor.effects.forEach(eff => {            
+            if (!eff.disabled)
+            {
+                const s = {
+                    id: eff.id,
+                    token: this.attackerToken,
+                    idx: this.statuses.length,
+                    img: eff.img,
+                    name: eff.name,
+                    description: eff.description,
+                    active: true,
+                };
+                this.statuses.push(s);
+                this.attackerStatuses.push(s);
+            }
         });
 
         // Les effets de la cible
         this.targetToken.actor.effects.forEach(eff => {
-            const s = {
-                id: eff.id,
-                token: this.targetToken,
-                idx: this.statuses.length,
-                img: eff.img,
-                name: eff.name,
-                description: eff.description,
-                active: true,
-            };
-            this.statuses.push(s);
-            this.defenderStatuses.push(s);
+            if (!eff.disabled)
+            {
+                const s = {
+                    id: eff.id,
+                    token: this.targetToken,
+                    idx: this.statuses.length,
+                    img: eff.img,
+                    name: eff.name,
+                    description: eff.description,
+                    active: true,
+                };
+                this.statuses.push(s);
+                this.defenderStatuses.push(s);
+            }
         });
 
         // Chargement des enrichers des features
@@ -774,37 +780,34 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
         let token = this.targetToken;
         
         if (token.actor.system.attributes.hp.value <= 0)
-        {       
-            await token.actor.toggleStatusEffect("prone");
-            await token.actor.toggleStatusEffect("unconscious");
+        {
+            if (!token.actor.effects.find(eff => eff.statuses.has("prone"))) await token.actor.toggleStatusEffect("prone");
+            if (!token.actor.effects.find(eff => eff.statuses.has("unconscious"))) await token.actor.toggleStatusEffect("unconscious");
             
-            if (!token.actor.hasPlayerOwner) {                
+            if (!token.actor.hasPlayerOwner && !token.actor.effects.find(eff => eff.statuses.has("dead")) )
                 await token.actor.toggleStatusEffect("dead");
-            }
         }
 
         // On lance les jets de concentration
         for (let i = 0; i < this.concentrationChecks.length; i++)
-        {
-            if (token.actor.system.attributes.hp.value <= 0)
-                break;   // Il est mort, il n'y a plus de concentration, pas besoin de checker
+        {                        
             let c = this.concentrationChecks[i];
             
-            const r = await token.actor.rollConcentration({
+            const r = (token.actor.system.attributes.hp.value <= 0) ? null : await token.actor.rollConcentration({
                 targetValue: c.dd,
             });
 
-            if (r && r.total < c.dd)
+            if (token.actor.system.attributes.hp.value <= 0 || (r && r.total < c.dd))
             {
                 // failed ! 
                 // on retire toutes les concentrations du token
-                let concentrationEffects = token.actor.effects.filter(eff => eff.name.toLowerCase().includes("concentrat"));
+                if (token.actor.system.attributes.hp.value <= 0)
+                    chatContent += `<li>✖ Concentration : mort -> brisé !</li>`;
+                else
+                    chatContent += `<li>✖ Concentration : ${c.source} : ${r.total}/${c.dd} : raté !</li>`;
 
-                chatContent += `<li>✖ Concentration : ${c.source} : ${r.total}/${c.dd} : raté !</li>`;                
-
-                for (let effect of concentrationEffects) {
+                for (let effect of token.actor.effects.filter(eff => eff.statuses.has("concentrating")))
                     await effect.delete();
-                }
                 
                 // Et c'est fini,
                 break;
@@ -825,32 +828,17 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
             speaker: ChatMessage.getSpeaker({ token: this.targetToken.document }),
             content: chatContent,        
         };
-        ChatMessage.create(chatData);
-        
-        // On avance l'initiative et on ferme la fenêtre
-        /* NON, ca fout le bordel
-        const combat = game.combat;
-        if (combat)
-        {
-            const current = combat.combatant;
-            const next = combat.turns.findIndex(t => t.id == current.id) + 1;
-            if (next >= combat.turns.length)
-                await combat.nextRound();
-            else
-                await combat.update({ turn: next });
-        }*/
+        ChatMessage.create(chatData);            
 
         // On ferme la fenêtre 
-        this.close();
+        this.endOfAction();
     }
 
     /**
      * Next round
      * 
-     * @param {*} event 
-     * @param {*} target 
      */
-    static async nextTurn(event, target)
+    async endOfAction()
     {
         // Si nous étions en réaction, on ferme la fenêtre
         if (this.isReaction)
@@ -865,38 +853,21 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
             {
                 // Appliquer l'effet sur l'acteur du token
                 await effectInterface.addEffect({effectName : effectName, uuid: this.attackerToken.actor.uuid });
-            }            
-            
-            this.close();
-            return;
+            }
         }
 
-        // Sinon on avance l'initiative
-        const combat = game.combat;
-        if (combat)
-        {
-            do
-            {
-                const current = combat.combatant;
-                const next = combat.turns.findIndex(t => t.id == current.id) + 1;
-                if (next >= combat.turns.length)
-                    await combat.nextRound();
-                else
-                    await combat.update({ turn: next });
-            } while (!combat.combatant.actor.hasPlayerOwner && combat.combatant.defeated); 
+        this.close();             
+    }
 
-            // On ferme la fenêtre si c'est au tour d'un joueur
-            if (combat.combatant.actor.hasPlayerOwner)
-                this.close();
-            else // sinon on réinitialise la fenêtre
-            {
-                const c = game.combat?.combatant?.token;
-                // On cherche le token de l'acteur dont c'est le tour
-                if (c)
-                    this.attackerToken = canvas.tokens.get(c._id);
-                this.init();
-            }
-        }            
+    /**
+     * Next round
+     * 
+     * @param {*} event 
+     * @param {*} target 
+     */
+    static async nextTurn(event, target)
+    {
+        this.endOfAction();        
     }
 
     /**
@@ -934,7 +905,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
      */
     async chooseTarget()
     {
-      const selectedToken = await SelectorTokenApp.selectToken({ filterOption: "players", distanceToken: this.attackerToken });
+      const selectedToken = await SelectorTokenApp.selectToken({ filterOption: "all", distanceToken: this.attackerToken });
       if (selectedToken)
       {
         this.targetToken = selectedToken;

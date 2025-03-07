@@ -21,7 +21,7 @@
         <div class="attcks" style="flex-grow: 1;">
             <div class="header">        
                 <div class="portrait" data-action="chooseTokenAction" data-mode="attacker">
-                    <img class="gold-icon" src="{{attacker.document.texture.src}}" width="64" height="64" data-tooltip="{{attacker.document.name}}" />
+                    <img class="gold-icon" style="width: 64px;" src="{{attacker.document.texture.src}}" width="64" height="64" data-tooltip="{{attacker.document.name}}" />
                 </div>
                 {{#each attackerStatuses}}
                 <div class="status {{#unless this.active}}delete-status{{/unless}}" data-tooltip="{{this.description}}">
@@ -43,7 +43,7 @@
                 </div>
                 {{/each}}
                 <div class="portrait" data-action="chooseTokenAction" data-mode="target">
-                    <img class="gold-icon" src="{{target.document.texture.src}}" width="64" height="64" data-tooltip="{{target.document.name}}"/>
+                    <img class="gold-icon" style="width: 64px;" src="{{target.document.texture.src}}" width="64" height="64" data-tooltip="{{target.document.name}}"/>
                 </div>        
             </div>
 
@@ -169,7 +169,7 @@
                                 {{#if totalDamage}}
                                 <button data-action="applyDamageAction">&nbsp;Appliquer&nbsp;→&nbsp;</button>
                                 {{^}}
-                                <button data-action="nextTurnAction">&nbsp;Next&nbsp;turn&nbsp;→&nbsp;</button>
+                                <button data-action="nextTurnAction">&nbsp;Fermer&nbsp;→&nbsp;</button>
                                 {{/if}}
                             </td>
                             <td style="color: {{projectionColor}};">{{projectionHP}}</td>
