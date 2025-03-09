@@ -443,6 +443,13 @@ Hooks.once("ready", () => {
          linkElement.href = "modules/juls-dnd-tools/assets/horizontal.css"; // Chemin vers le fichier CSS
          document.head.appendChild(linkElement);
       }
+
+      // On parcours l'interface à la recherche des classes "body .illandril-grid-labels--grid--container"
+      // pour leur rajouter la class "story-sheet" pour qu'ils ne soit pas masqués par monk-display
+      let elements = document.querySelectorAll("body .illandril-grid-labels--grid--container");
+      elements.forEach(element => {
+         element.classList.add("story-sheet");
+      });
    }
    
    game.socket.on(socketName, (data) => { 
