@@ -227,6 +227,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.damages.forEach(d => {
             totalDamage += d.take;
         });
+        
         context.totalDamage = totalDamage * -1;
         context.currentHP = this.targetToken.actor.system.attributes.hp.value;
         context.projectionHP = context.currentHP - totalDamage;
@@ -316,16 +317,18 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
                         
                         // Injection du type de dégâts derrière les dés
                         formula = formula.replace(/d(\d+)/, 'd$1[' + f.damageType + ']');
-
-                        let weapon = this.attackResults[i].weapon;
-                        //let id = weapon.id + '-' + f.damageType;    // pour regrouper les dégâts par type
-                        let id = i + '-' + f.damageType;              // pour ne pas regrouper les dégâts
-                        rolls.push({
-                            id: id,
-                            name: weapon.name + ' n°' + (i+1),
-                            type: f.damageType,
-                            roll: new Roll(formula),
-                        });
+                        if (formula)
+                        {
+                            let weapon = this.attackResults[i].weapon;
+                            //let id = weapon.id + '-' + f.damageType;    // pour regrouper les dégâts par type
+                            let id = i + '-' + f.damageType;              // pour ne pas regrouper les dégâts
+                            rolls.push({
+                                id: id,
+                                name: weapon.name + ' n°' + (i+1),
+                                type: f.damageType,
+                                roll: new Roll(formula),
+                            });
+                        }
                     });
 
                     // Lançons les dés

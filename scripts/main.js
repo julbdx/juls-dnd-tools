@@ -1,5 +1,4 @@
 import { QuickAttackApp } from './quick-attack-app.js';
-import { QuickAttack2App } from './quick-attack2-app.js';
 import { QuickDamageApp } from './quick-damage-app.js';
 import { BuyServiceApp } from "./buy-service-app.js";
 import { JulMerchantSheet } from './merchant-sheet.js';
@@ -158,7 +157,6 @@ Hooks.once("ready", () => {
    // Publication de fonction pour les macros
    let m = game.modules.get("juls-dnd-tools");
    m.julQuickAttack = julQuickAttack;
-   m.julQuickAttack2 = julQuickAttack2;
    m.julQuickDamage = julQuickDamage;
    m.julQuickConcentration = julQuickConcentration;
    m.julRests = julRests;
@@ -454,6 +452,9 @@ async function julQuickAttack(attackerToken, targetToken)
  */
 async function julCountdown(seconds)
 {
+   // On mémorise la date départ ici
+   const endDate = Date.now() + seconds * 1000;
+
    // Vérifier s'il existe déjà un compte à rebours
    let existing = document.getElementById("countdown-overlay");
    if (existing) existing.remove();
@@ -498,21 +499,24 @@ async function julCountdown(seconds)
    document.head.appendChild(style);
 
    // Boucle du compte à rebours
-   for (let i = seconds; i >= 0; i--) {
+   while (seconds > 0) 
+   {
+      // Dans seconds, on calcul le nombre de secondes qui nous sépare de endDate
+      seconds = Math.max(0, Math.floor((endDate - Date.now()) / 1000));
 
       // Affichage en minute > 60 secondes
-      if (i > 60)
+      if (seconds > 60)
       {
-         let minutes = Math.floor(i / 60);
-         let secondsLeft = i  - minutes * 60;
+         let minutes = Math.floor(seconds / 60);
+         let secondsLeft = seconds  - minutes * 60;
          if (secondsLeft < 10) secondsLeft = "0" + secondsLeft;
          countdownDiv.textContent = `${minutes}:${secondsLeft}`;
       }
       else
-         countdownDiv.textContent = i;
+         countdownDiv.textContent = seconds;
 
        // Activer l'animation de pulsation pour les 10 dernières secondes
-       if (i <= 10) {
+       if (seconds <= 10) {
            countdownDiv.style.animation = "pulse 0.5s infinite alternate";
        }
 
@@ -524,37 +528,6 @@ async function julCountdown(seconds)
    await new Promise(resolve => setTimeout(resolve, 3000));
    countdownDiv.remove();
    document.getElementById("countdown-style")?.remove();
-}
-
-/**
- * Fonction pour macro qui déclenche une attaque rapide
- * 
- */
-async function julQuickAttack2(attackerToken)
-{
-   // Si pas d'acteur, alors on prend l'acteur dont c'est le tour de combat
-   if (!attackerToken)
-   {
-      const c = game.combat?.combatant?.token;
-      // On cherche le token de l'acteur dont c'est le tour
-      if (c)
-         attackerToken = canvas.tokens.get(c._id);
-   }
-
-   // Si toujours pas d'acteur, on prend le premier acteur sélectionné
-   if (!attackerToken)
-      attackerToken = canvas.tokens.controlled[0];
-
-   // Si toujours pas d'acteur, on arrête avec un message d'erreur
-   if (!attackerToken)
-   {
-      ui.notifications.error("Aucun attaquant n'est sélectionné !");
-      return;
-   }
-
-   // Créer et afficher l'application
-   const app = new QuickAttack2App(attackerToken);
-   app.render(true);  // Afficher l'application
 }
 
 /**
