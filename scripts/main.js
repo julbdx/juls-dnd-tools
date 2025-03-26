@@ -4,6 +4,7 @@ import { BuyServiceApp } from "./buy-service-app.js";
 import { JulMerchantSheet } from './merchant-sheet.js';
 import { JulCombatSystem } from './combat-system.js';
 import { RestsApp } from "./rests-app.js";
+import { RollStats } from '../../midi-qol/src/module/RollStats.js';
 
 /*
 Midi QOL :
@@ -46,7 +47,9 @@ const julsCloseImagePopout = () => {
 function isTrustedManualRollForActor(actor)
 {
    if (actor)
-      return actor.collections.items.some(item => item.name === "Jets manuels" || item.name === "Manual rolls"); // Remplacer par l'identifiant correct si nécessaire.
+      return actor.hasPlayerOwner || 
+               actor.collections.items.some(item => item.name === "Jets manuels" || 
+                  item.name === "Manual rolls"); // Remplacer par l'identifiant correct si nécessaire.
 
    return false;
 }
@@ -101,6 +104,93 @@ Hooks.once("init", () => {
           // Tu peux ajouter ici une action lorsque le mode change
       }
   });
+
+  class CustomJulD20Roll extends CONFIG.Dice.D20Roll {
+      constructor(formula, data, options) {
+         super(formula, data, options);
+         if ( !this.options.configured ) this.configureModifiers();
+      }
+
+      /**
+         * Construct and perform a roll through the standard workflow.
+         * @param {BasicRollProcessConfiguration} [config={}]   Configuration for the rolls.
+         * @param {BasicRollDialogConfiguration} [dialog={}]    Configuration for roll prompt.
+         * @param {BasicRollMessageConfiguration} [message={}]  Configuration for message creation.
+         * @returns {BasicRoll[]}
+         */
+      static async build(config={}, dialog={}, message={}) {
+         // Lancé manuel ?
+         const actor = config.subject;
+         if (isTrustedManualRollForActor(actor))
+         {
+            const saveDC = config.target ?? '?';
+            const abilityLabel = CONFIG.DND5E.abilities[config.ability].label;
+ 
+            const content = `
+            <form>
+               <p>Jet de sauvegarde : <strong>${abilityLabel}</strong></p>
+               ${saveDC ? `<p>DD : <strong>${saveDC}</strong></p>` : ""}
+            </form>
+            `;
+
+            const rollResult = await new Promise((resolve) => {
+               const d = new Dialog({
+                  title: `Jet manuel pour ${actor.name}`,
+                  content,
+                  buttons: {
+                     success: {
+                        label: "✅ Succès",
+                        callback: () => resolve(30)
+                      },
+
+                      failure: {
+                        label: "❌ Échec",
+                        callback: () => resolve(-10)
+                      },
+
+                      normal: {
+                        label: "🎲 Jet standard",
+                        callback: () => resolve(null)
+                      },
+                  },
+                  render: (html) => {                     
+                  },
+                  default: "manual-success"
+               });
+               d.render(true);
+               });
+            
+            if (rollResult)
+            {
+               let rolls = [];
+               for (let i = 0; i < config.rolls.length; i++)
+               {               
+                  let p = (config.rolls[i].parts ?? []).join(" + ");               
+                  if (p)
+                     p = ' + ' + p;
+
+                  const formula = rollResult + p;
+                  config.rolls[i].options ??= {};
+                  config.rolls[i].options.target ??= config.target;
+                  console.log(formula);
+                  let r = new Roll(formula, config.rolls[i].data, config.rolls[i].options);
+                  rolls.push(r);
+               }
+
+               await this.buildEvaluate(rolls, config, message);
+               await this.buildPost(rolls, config, message);
+
+               return rolls;
+            }
+         }         
+
+         return await super.build(config, dialog, message);
+      }
+   }
+
+   // Remplacement des dés   
+   CONFIG.Dice.D20Roll = CustomJulD20Roll;
+   CONFIG.Dice.rolls.push(CustomJulD20Roll);
    
    // Fiche de marchand
    Actors.registerSheet("dnd5e", JulMerchantSheet, { types: ["npc"], makeDefault: false });
@@ -163,6 +253,7 @@ Hooks.once("ready", () => {
    m.julCountdown = julCountdown;
    m.julCombatSystem = new JulCombatSystem();
 });
+ 
 
 function addLinksToImages(images) {
    images.each(function() {
