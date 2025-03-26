@@ -152,10 +152,7 @@ Hooks.once("init", () => {
                         label: "🎲 Jet standard",
                         callback: () => resolve(null)
                       },
-                  },
-                  render: (html) => {                     
-                  },
-                  default: "manual-success"
+                  }
                });
                d.render(true);
                });
