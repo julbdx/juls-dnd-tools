@@ -5,6 +5,7 @@ import { JulMerchantSheet } from './merchant-sheet.js';
 import { JulCombatSystem } from './combat-system.js';
 import { RestsApp } from "./rests-app.js";
 import { RollStats } from '../../midi-qol/src/module/RollStats.js';
+import { NumericTerm } from '../../midi-qol/src/midi-qol.js';
 
 /*
 Midi QOL :
@@ -123,7 +124,8 @@ Hooks.once("init", () => {
          const actor = config.subject;
          if (isTrustedManualRollForActor(actor))
          {
-            const saveDC = config.target ?? '?';
+            console.log(configgit);
+            const saveDC = message?.flags?.["midi-qol"]?.saveRequest?.dc ?? '?';
             const abilityLabel = CONFIG.DND5E.abilities[config.ability].label;
  
             const content = `
@@ -140,12 +142,12 @@ Hooks.once("init", () => {
                   buttons: {
                      success: {
                         label: "✅ Succès",
-                        callback: () => resolve(30)
+                        callback: () => resolve(20)
                       },
 
                       failure: {
                         label: "❌ Échec",
-                        callback: () => resolve(-10)
+                        callback: () => resolve(1)
                       },
 
                       normal: {
@@ -158,23 +160,28 @@ Hooks.once("init", () => {
                });
             
             if (rollResult)
-            {
-               let rolls = [];
-               for (let i = 0; i < config.rolls.length; i++)
-               {               
-                  let p = (config.rolls[i].parts ?? []).join(" + ");               
-                  if (p)
-                     p = ' + ' + p;
-
-                  const formula = rollResult + p;
-                  config.rolls[i].options ??= {};
-                  config.rolls[i].options.target ??= config.target;
-                  console.log(formula);
-                  let r = new Roll(formula, config.rolls[i].data, config.rolls[i].options);
-                  rolls.push(r);
-               }
-
+            {               
+               dialog.configure = false;
+               const rolls = await this.buildConfigure(config, dialog, message);
                await this.buildEvaluate(rolls, config, message);
+
+               // INTERCEPTION DES ÉCHECS ICI
+               for (let roll of rolls) {
+                  for (let term of roll.terms) {
+                     if (term instanceof Die) {
+                        for (let result of term.results) {
+                           result.result = rollResult;
+                           result.active = true;
+                           result.hidden = true;
+                        }
+                     }
+                  }
+
+                  // Important : mettre à jour la valeur du jet
+                  
+                  roll._total = roll._evaluateTotal();                  
+               }  
+               
                await this.buildPost(rolls, config, message);
 
                return rolls;
