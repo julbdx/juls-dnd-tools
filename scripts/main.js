@@ -4,8 +4,6 @@ import { BuyServiceApp } from "./buy-service-app.js";
 import { JulMerchantSheet } from './merchant-sheet.js';
 import { JulCombatSystem } from './combat-system.js';
 import { RestsApp } from "./rests-app.js";
-import { RollStats } from '../../midi-qol/src/module/RollStats.js';
-import { NumericTerm } from '../../midi-qol/src/midi-qol.js';
 
 /*
 Midi QOL :
@@ -124,8 +122,7 @@ Hooks.once("init", () => {
          const actor = config.subject;
          if (isTrustedManualRollForActor(actor))
          {
-            console.log(configgit);
-            const saveDC = message?.flags?.["midi-qol"]?.saveRequest?.dc ?? '?';
+            const saveDC = config.target ?? '?';
             const abilityLabel = CONFIG.DND5E.abilities[config.ability].label;
  
             const content = `
