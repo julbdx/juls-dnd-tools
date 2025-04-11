@@ -2,8 +2,8 @@
     <!-- switch pour un repos court ou long (un switch pas de bouton) -->
     <div class="rest-type" style="text-align: center;">
         <div class="choices">
-            <a class="choice{{#if short_rest}} active-choice{{/if}}"data-action="chooseRestTypeAction" data-value="short">Repos court</a>
-            <a class="choice{{#if long_rest}} active-choice{{/if}}"data-action="chooseRestTypeAction" data-value="long">Repos long</a>
+            <a class="choice{{#if short_rest}} active-choice{{/if}}" data-action="chooseRestTypeAction" data-value="short">Repos court</a>
+            <a class="choice{{#if long_rest}} active-choice{{/if}}" data-action="chooseRestTypeAction" data-value="long">Repos long</a>
         </div>
     </div>
     
@@ -59,7 +59,9 @@
                 <td class="{{#if this.resting}}resting{{^}}not-resting{{/if}}">
                     <div class="oneline">
                         <!--<button>-</button>-->
+                        <a data-action="changeHpAction" data-actor="{{this.id}}" data-value="-1">-1</a>
                         <input style="text-align: center;" type="text" name="hp" value="{{this.hp}}" data-actor="{{this.id}}" />
+                        <a data-action="changeHpAction" data-actor="{{this.id}}" data-value="+1">+1</a>
                         <!--<button>+</button>-->
                     </div>
                 </td>
