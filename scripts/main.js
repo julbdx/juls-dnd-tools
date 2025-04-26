@@ -749,9 +749,12 @@ async function julQuickDamage(targetsTokens, defaultDamage = 'force', damage = 0
                         await c.update({ defeated: true, hidden: true });                           
                      }
                }
+               console.log(token.actor.effects);
                
                // AJoute l'effet mort au token s'il ne l'a pas déjà
-               if (!token.actor.effects.find(eff => eff.statuses.has("dead")))
+               if (!token.actor.effects.find(eff => eff.statuses.has("incapacitated"))) 
+                  await token.actor.toggleStatusEffect("incapacitated", { active: true, overlay: true});
+               else if (!token.actor.effects.find(eff => eff.statuses.has("dead"))) 
                   await token.actor.toggleStatusEffect("dead", { active: true, overlay: true});
 
                // On affiche plus les barres de vie
