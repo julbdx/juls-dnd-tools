@@ -252,6 +252,7 @@ Hooks.once("ready", () => {
    m.julQuickConcentration = julQuickConcentration;
    m.julRests = julRests;
    m.julCountdown = julCountdown;
+   m.julPlayMusic = stopAndPlayMusic;
    m.julCombatSystem = new JulCombatSystem();
 });
  
@@ -620,6 +621,49 @@ async function julCountdown(seconds)
    await new Promise(resolve => setTimeout(resolve, 3000));
    countdownDiv.remove();
    document.getElementById("countdown-style")?.remove();
+}
+
+/**
+ * Restaure la musique d'origine
+ * 
+ * @param {*} newPlaylistId nouvelle playlist  à lire
+ * @param {*} duration durée des transitions
+ */
+async function stopAndPlayMusic(newPlaylistId, duration = 10)
+{
+   let musicsPlaying = []; 
+
+   // On récupère la playlist à jouer
+   let selectedPlaylist = game.playlists.find(p => p.id === newPlaylistId);
+
+   // on arrête toutes les musiques
+   for (const playlist of game.playlists.filter(playlist => playlist.playing))
+   {
+      // On ne garde en mémoire que les playlists non soundboard ou
+      // si le son actuel de la playlist est pas en mode repeat
+      let playingSound = playlist.sounds.find(s => s.playing);
+      if (playingSound && (playlist.mode !== CONST.PLAYLIST_MODES.SOUNDBOARD || playingSound.repeat))
+      {
+            musicsPlaying.push(playingSound);
+            await playlist.update({ fade: duration * 1000 });
+            //await playlist.stopAll();
+            setTimeout(() => {
+               playlist.update({ fade: 100 });
+            }, duration * 1000);            
+      }
+   }
+
+   for (const playlist of game.playlists.filter(playlist => playlist.playing))
+      await playlist.stopAll();
+
+   // on lance la playlist
+   if (selectedPlaylist)
+   {
+      await selectedPlaylist.update({ fade: duration * 1000 });      
+      await selectedPlaylist.playAll();
+   }
+   
+
 }
 
 /**

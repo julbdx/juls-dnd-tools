@@ -40,8 +40,8 @@
   "id": "juls-dnd-tools",
   "compatibility": {
     "minimum": "12",
-    "verified": "12.331",
-    "maximum": "12"
+    "verified": "12.342",
+    "maximum": "13"
   },
   "relationships": {
     "systems": [
@@ -51,7 +51,7 @@
         "compatibility": {
           "minimum": "4",
           "verified": "4.2.0",
-          "maximum": "4.4.0.0"
+          "maximum": "5.9.0.0"
         }
       }
     ]
