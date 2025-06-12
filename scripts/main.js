@@ -255,6 +255,7 @@ Hooks.once("ready", () => {
    m.julQuickConcentration = julQuickConcentration;
    m.julRests = julRests;
    m.julCountdown = julCountdown;
+   m.nat20 = nat20;
    m.julPlayMusic = stopAndPlayMusic;
    m.julCombatSystem = new JulCombatSystem();
 });
@@ -541,6 +542,26 @@ async function julQuickAttack(attackerToken, targetToken)
    // Créer et afficher l'application
    const app = new QuickAttackApp(attackerToken, targetToken);
    app.render(true);  // Afficher l'application
+}
+
+
+/**
+ * Fonction qui déclenche un jet natural 20 et l'affiche avec Dice So Nice
+ * aux joueurs
+ */
+async function nat20()
+{
+   // Force un d20 à faire un 20 naturel, avec Dice So Nice
+      const roll = await new Roll('1d20').evaluate({ async: true });
+
+      // On modifie directement le résultat pour qu'il soit un 20
+      roll.terms[0].results[0].result = 20;
+      roll.terms[0].results[0].active = true;
+      roll._total = 20;
+      roll._evaluated = true;
+
+      // Affiche le dé avec Dice So Nice
+      await game.dice3d?.showForRoll(roll, game.user, true);
 }
 
 /**
