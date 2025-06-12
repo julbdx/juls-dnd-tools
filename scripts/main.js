@@ -4,8 +4,6 @@ import { BuyServiceApp } from "./buy-service-app.js";
 import { JulMerchantSheet } from './merchant-sheet.js';
 import { JulCombatSystem } from './combat-system.js';
 import { RestsApp } from "./rests-app.js";
-import { RollStats } from '../../midi-qol/src/module/RollStats.js';
-import { NumericTerm } from '../../midi-qol/src/midi-qol.js';
 
 /*
 Midi QOL :
@@ -121,11 +119,13 @@ Hooks.once("init", () => {
          */
       static async build(config={}, dialog={}, message={}) {
          // Lancé manuel ?
+         console.log(config);
+         console.log(dialog);
+         console.log(message);
          const actor = config.subject;
          if (isTrustedManualRollForActor(actor))
          {
-            console.log(configgit);
-            const saveDC = message?.flags?.["midi-qol"]?.saveRequest?.dc ?? '?';
+            const saveDC = config.target;
             const abilityLabel = CONFIG.DND5E.abilities[config.ability].label;
  
             const content = `
@@ -195,7 +195,7 @@ Hooks.once("init", () => {
    // Remplacement des dés   
    CONFIG.Dice.D20Roll = CustomJulD20Roll;
    CONFIG.Dice.rolls.push(CustomJulD20Roll);
-   
+   console.log("Jul D20 Roll configuré !");
    // Fiche de marchand
    Actors.registerSheet("dnd5e", JulMerchantSheet, { types: ["npc"], makeDefault: false });
 });
@@ -544,71 +544,66 @@ async function julQuickAttack(attackerToken, targetToken)
 
 /**
  * Fonction qui affiche un chrono !
+ * @param {number} seconds - Nombre de secondes pour le compte à rebours
+ * @param {string} name - Nom du compte à rebours (optionnel)
+ * @param {string} color - Couleur du texte du compte à rebours (optionnel, par défaut 'red')
  */
-async function julCountdown(seconds)
+async function julCountdown(seconds, name = 'default', color = 'red')
 {
    // On mémorise la date départ ici
    const endDate = Date.now() + seconds * 1000;
 
-   // Vérifier s'il existe déjà un compte à rebours
-   let existing = document.getElementById("countdown-overlay");
-   if (existing) existing.remove();
+   // On vérifie s'il existe déjà l'overlay de compte à rebours
+   let countdownOverlay = document.querySelector('#djul-countdown-overlay');
 
-   // Créer un élément div pour afficher le compte à rebours
-   let countdownDiv = document.createElement("div");
-   countdownDiv.id = "countdown-overlay";
-   countdownDiv.textContent = '';
-   document.body.appendChild(countdownDiv);
+   // Si l'overlay n'existe pas, on le crée
+   if (!countdownOverlay) {
+      countdownOverlay = document.createElement('div');
+      countdownOverlay.id = 'djul-countdown-overlay';
+      document.body.appendChild(countdownOverlay);
+   }
 
-   // Ajouter les styles CSS
-   let style = document.createElement("style");
-   style.id = "countdown-style";
-   style.innerHTML = `
-       #countdown-overlay {
-           position: fixed;
-           pointer-events: none;
-           top: 20%;
-           left: 50%;
-           transform: translate(-50%, -50%);
-           font-size: 120px;
-           font-weight: bold;
-           color: red;
-           text-shadow: 3px 3px 10px black;
-           transition: transform 0.2s ease-in-out;
-           z-index: 9999;
-           opacity: 1;
-       }
-       
-       @keyframes pulse {
-           0% { transform: translate(-50%, -50%) scale(1); }
-           50% { transform: translate(-50%, -50%) scale(1.3); }
-           100% { transform: translate(-50%, -50%) scale(1); }
-       }
-
-       @keyframes blink {
-            0% { opacity: 1; }
-            50% { opacity: 0; }
-            100% { opacity: 1; }
-        }
-   `;
-   document.head.appendChild(style);
+   // Vérifier s'il existe déjà un compte à rebours du même nom, si oui, on le supprime
+   const countdownId = "countdown-" + name;
+   let countdownDiv = document.getElementById(countdownId);
+   if (!countdownDiv)
+   {
+      // Créer un élément div pour afficher le compte à rebours
+      countdownDiv = document.createElement("div");
+      countdownDiv.id = countdownId;
+      countdownDiv.classList.add("djul-countdown");      
+      countdownOverlay.appendChild(countdownDiv);   
+      countdownDiv.textContent = '';      
+   }
+   else
+      countdownDiv.style.animation = 'none'; // Pas d'animation par défaut   
+   countdownDiv.style = `color: ${color};}`;
 
    // Boucle du compte à rebours
+   let resetAutoDetect = null;
    while (seconds > 0) 
    {
+      // On prend le texte du compte à rebours
+      const countdownText = countdownDiv.textContent;
+      // Si le texte du compte à rebours est différent de resetAutoDetect, alors on a terminé : le compte à rebours a été réinitialisé
+      if (resetAutoDetect != null && countdownText != resetAutoDetect)
+         return;
+      
       // Dans seconds, on calcul le nombre de secondes qui nous sépare de endDate
       seconds = Math.max(0, Math.floor((endDate - Date.now()) / 1000));
 
       // Affichage en minute > 60 secondes
+      let label = seconds;
       if (seconds > 60)
       {
          let minutes = Math.floor(seconds / 60);
          let secondsLeft = seconds  - minutes * 60;
          if (secondsLeft < 10) secondsLeft = "0" + secondsLeft;
-         countdownDiv.textContent = `${minutes}:${secondsLeft}`;
+         label = `${minutes}:${secondsLeft}`;
       }
-      else
-         countdownDiv.textContent = seconds;
+
+      countdownDiv.textContent = label;
+      resetAutoDetect = label;
 
        // Activer l'animation de pulsation pour les 10 dernières secondes
        if (seconds <= 10) {
@@ -621,8 +616,21 @@ async function julCountdown(seconds)
    // Supprimer l'affichage et le style après expiration du temps
    countdownDiv.style.animation = "blink 1s infinite alternate";
    await new Promise(resolve => setTimeout(resolve, 3000));
+
+   // On prend le texte du compte à rebours
+   const countdownText = countdownDiv.textContent;
+   // Si le texte du compte à rebours est différent de resetAutoDetect, alors on a terminé : le compte à rebours a été réinitialisé
+   if (resetAutoDetect != null && countdownText != resetAutoDetect)
+      return;
+
    countdownDiv.remove();
-   document.getElementById("countdown-style")?.remove();
+   
+   // On compte le nombre de compte à rebours actifs
+   const activeCountdowns = document.querySelectorAll('.djul-countdown');
+   if (activeCountdowns.length === 0) {
+      // Si plus de compte à rebours actifs, on supprime l'overlay
+      countdownOverlay.remove();
+   }
 }
 
 /**
