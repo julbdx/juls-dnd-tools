@@ -125,7 +125,7 @@ Hooks.once("init", () => {
          const actor = config.subject;
          if (isTrustedManualRollForActor(actor))
          {
-            const saveDC = config.target;
+            const saveDC = config.target ?? '?';
             const abilityLabel = CONFIG.DND5E.abilities[config.ability].label;
  
             const content = `
@@ -255,6 +255,7 @@ Hooks.once("ready", () => {
    m.julQuickConcentration = julQuickConcentration;
    m.julRests = julRests;
    m.julCountdown = julCountdown;
+   m.julPlayMusic = stopAndPlayMusic;
    m.julCombatSystem = new JulCombatSystem();
 });
  
@@ -634,6 +635,49 @@ async function julCountdown(seconds, name = 'default', color = 'red')
 }
 
 /**
+ * Restaure la musique d'origine
+ * 
+ * @param {*} newPlaylistId nouvelle playlist  à lire
+ * @param {*} duration durée des transitions
+ */
+async function stopAndPlayMusic(newPlaylistId, duration = 10)
+{
+   let musicsPlaying = []; 
+
+   // On récupère la playlist à jouer
+   let selectedPlaylist = game.playlists.find(p => p.id === newPlaylistId);
+
+   // on arrête toutes les musiques
+   for (const playlist of game.playlists.filter(playlist => playlist.playing))
+   {
+      // On ne garde en mémoire que les playlists non soundboard ou
+      // si le son actuel de la playlist est pas en mode repeat
+      let playingSound = playlist.sounds.find(s => s.playing);
+      if (playingSound && (playlist.mode !== CONST.PLAYLIST_MODES.SOUNDBOARD || playingSound.repeat))
+      {
+            musicsPlaying.push(playingSound);
+            await playlist.update({ fade: duration * 1000 });
+            //await playlist.stopAll();
+            setTimeout(() => {
+               playlist.update({ fade: 100 });
+            }, duration * 1000);            
+      }
+   }
+
+   for (const playlist of game.playlists.filter(playlist => playlist.playing))
+      await playlist.stopAll();
+
+   // on lance la playlist
+   if (selectedPlaylist)
+   {
+      await selectedPlaylist.update({ fade: duration * 1000 });      
+      await selectedPlaylist.playAll();
+   }
+   
+
+}
+
+/**
  * Fonction pour démarrer l'application de repos
  */
 function julRests()
@@ -760,9 +804,12 @@ async function julQuickDamage(targetsTokens, defaultDamage = 'force', damage = 0
                         await c.update({ defeated: true, hidden: true });                           
                      }
                }
+               console.log(token.actor.effects);
                
                // AJoute l'effet mort au token s'il ne l'a pas déjà
-               if (!token.actor.effects.find(eff => eff.statuses.has("dead")))
+               if (!token.actor.effects.find(eff => eff.statuses.has("incapacitated"))) 
+                  await token.actor.toggleStatusEffect("incapacitated", { active: true, overlay: true});
+               else if (!token.actor.effects.find(eff => eff.statuses.has("dead"))) 
                   await token.actor.toggleStatusEffect("dead", { active: true, overlay: true});
 
                // On affiche plus les barres de vie

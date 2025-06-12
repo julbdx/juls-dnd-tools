@@ -67,7 +67,7 @@ export class JulCombatSystem
             await playlist.update({ fade: duration * 1000 });
 
         // On attends 1 seconde
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        //await new Promise(resolve => setTimeout(resolve, 1000));
 
         for (const playlist of game.playlists.filter(playlist => playlist.playing))
             await playlist.stopAll();

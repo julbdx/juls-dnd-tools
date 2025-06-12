@@ -381,7 +381,11 @@ export class QuickDamageApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 await token.actor.toggleStatusEffect("unconscious");
                 
                 if (!token.actor.hasPlayerOwner) {                
-                    await token.actor.toggleStatusEffect("dead");                    
+                    // NO WAY : await token.actor.toggleStatusEffect("dead");
+                    if (!token.actor.effects.find(eff => eff.statuses.has("incapacitated"))) 
+                        await token.actor.toggleStatusEffect("incapacitated", { active: true, overlay: true});
+                    else if (!token.actor.effects.find(eff => eff.statuses.has("dead"))) 
+                        await token.actor.toggleStatusEffect("dead", { active: true, overlay: true});
                 }
 
                 // Si la créature est morte

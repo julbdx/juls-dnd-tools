@@ -7,7 +7,7 @@ export class RestsApp extends HandlebarsApplicationMixin(ApplicationV2) {
         classes: ["dnd5e2", "dtjul-window", "dtjul-rests-app"],
         tag: "div",
         position: {
-            width: 600,
+            width: "940",
             height: "auto",        
         },
         window: {
@@ -20,6 +20,7 @@ export class RestsApp extends HandlebarsApplicationMixin(ApplicationV2) {
             chooseExhaustionAction: RestsApp.chooseExhaustion,
             consumeAction: RestsApp.consume,
             consumeDieAction: RestsApp.consumeDie,
+            changeHpAction: RestsApp.changeRegainHP,
             closeAction: RestsApp.close,
         }
     };
@@ -49,16 +50,21 @@ export class RestsApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.players = [];
         for (let actor of actors) {
 
+            const classes = actor.items.filter(i => i.type === "class");
+
             let die = [];
-            for (let c of actor.system.attributes.hd.classes)
-            {                
-                for (let j = 0; j < c.system.levels - c.system.hitDiceUsed; j++)
-                {
+            for (let c of classes) {                
+                const hdUsed = c.system.hd.spent;
+                const hdMax  = c.system.hd.max;  // Nombre total de dés, généralement = niveau
+                const hdType = c.system.hd.denomination;      // ex. "d8", "d10", etc.
+
+                // Pour chaque dé de vie non encore consommé...
+                for (let j = 0; j < (hdMax - hdUsed); j++) {
                     die.push({
                         id: die.length,
-                        dice: c.system.hitDice,
-                        class: c,
-                        consumed: false,
+                        dice: hdType,     // ex. "d8"
+                        class: c,         // Référence à l'Item "class"
+                        consumed: false
                     });
                 }
             }            
@@ -230,6 +236,24 @@ export class RestsApp extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     /**
+     * Ajustement des HP
+     * 
+     * @param {*} event 
+     * @param {*} target 
+     */
+    static async changeRegainHP(event, target)
+    {
+        // On choppe l'acteur
+        const player = this.players[target.dataset.actor];
+        if (player)
+        {
+            // On choppe le dé
+            player.hp += parseInt(target.dataset.value);
+            this.refresh();            
+        }
+    }
+
+    /**
      * Consommation d'un objet
      * 
      * @param {*} event 
@@ -291,7 +315,7 @@ export class RestsApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 for (let die of player.die_hp)
                 {
                     if (die.consumed)
-                        await die.class.update({ "system.hitDiceUsed": die.class.system.hitDiceUsed + 1 });
+                        await die.class.update({ "system.hd.spent": die.class.system.hd.spent + 1 });
                 }
 
                 await player.actor.shortRest({ dialog: false });

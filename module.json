@@ -9,7 +9,7 @@
       "flags": {}
     }
   ],
-  "version": "2.6.0",
+  "version": "2.7.0",
   "socket": true,
   "esmodules": [
     "scripts/select-token.js",
@@ -34,14 +34,14 @@
   "url": "https://github.com/julbdx/juls-dnd-tools",
   "bugs": "https://github.com/julbdx/juls-dnd-tools/issues",
   "changelog": "https://github.com/julbdx/juls-dnd-tools/releases",
-  "download": "https://github.com/julbdx/juls-dnd-tools/releases/download/2.6.0/juls-dnd-tools.zip",
+  "download": "https://github.com/julbdx/juls-dnd-tools/releases/download/2.7.0/juls-dnd-tools.zip",
   "manifest": "https://github.com/julbdx/juls-dnd-tools/releases/latest/download/module.json",
   "readme": "https://github.com/julbdx/juls-dnd-tools/releases/latest/download/README.md",
   "id": "juls-dnd-tools",
   "compatibility": {
     "minimum": "12",
-    "verified": "12.331",
-    "maximum": "12"
+    "verified": "12.342",
+    "maximum": "13"
   },
   "relationships": {
     "systems": [
@@ -51,7 +51,7 @@
         "compatibility": {
           "minimum": "4",
           "verified": "4.2.0",
-          "maximum": "4.4.0.0"
+          "maximum": "5.9.0.0"
         }
       }
     ]
