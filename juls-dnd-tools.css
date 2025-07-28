@@ -619,6 +619,13 @@
   justify-content: space-evenly;
 }
 
+.djul-label-count {
+  font-size: 20%; 
+  text-align: center; 
+  text-transform: uppercase; 
+  font-weight: 400; 
+}
+
 @keyframes pulse {
   0% { transform: scale(1); }
   50% { transform:  scale(1.3); }
