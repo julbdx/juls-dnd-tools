@@ -741,7 +741,7 @@ export class QuickAttackApp extends HandlebarsApplicationMixin(ApplicationV2) {
         // - une ligne par attaque qui a réussi avec le nom de l'arme et les dégâts infligés (type + résistance + dégâts pour chaque type de dégats)
         // - une ligne par attaque râtée
         // - et enfin une ligne pour chaque jet de concentration effectué, réussi ou raté
-        let chatContent = `<h2>Attaques subies</h2><ul>`;
+        let chatContent = `<h3>Attaques subies</h3><ul>`;
         for (let i = 0; i < this.damages.length; i++)
         {
             let d = this.damages[i];
