@@ -255,7 +255,7 @@ Hooks.once("ready", () => {
    m.julQuickConcentration = julQuickConcentration;
    m.julRests = julRests;
    m.julCountdown = julCountdown;
-   m.nat20 = nat20;
+   m.fakeDice = fakeDice;
    m.julPlayMusic = stopAndPlayMusic;
    m.julCombatSystem = new JulCombatSystem();
 });
@@ -551,13 +551,13 @@ async function julQuickAttack(attackerToken, targetToken)
  * 
  * @param {number} value - Valeur du jet, par défaut 20
  */
-async function nat20(value = 20)
+async function fakeDice(result = 20)
 {
    // Force un d20 à faire un 20 naturel, avec Dice So Nice
       const roll = await new Roll('1d20').evaluate({ async: true });
 
       // On modifie directement le résultat pour qu'il soit un 20
-      roll.terms[0].results[0].result = value;
+      roll.terms[0].results[0].result = result;
       roll.terms[0].results[0].active = true;
       roll._total = value;
       roll._evaluated = true;
@@ -596,7 +596,7 @@ async function julCountdown(seconds, name = 'default', color = 'red')
       countdownDiv = document.createElement("div");
       countdownDiv.id = countdownId;
       countdownDiv.classList.add("djul-countdown");      
-      countdownOverlay.appendChild(countdownDiv);   
+      countdownOverlay.appendChild(countdownDiv);
       countdownDiv.textContent = '';      
    }
    else
@@ -608,7 +608,7 @@ async function julCountdown(seconds, name = 'default', color = 'red')
    while (seconds > 0) 
    {
       // On prend le texte du compte à rebours
-      const countdownText = countdownDiv.textContent;
+      const countdownText = countdownDiv.innerHTML;
       // Si le texte du compte à rebours est différent de resetAutoDetect, alors on a terminé : le compte à rebours a été réinitialisé
       if (resetAutoDetect != null && countdownText != resetAutoDetect)
          return;
@@ -626,7 +626,9 @@ async function julCountdown(seconds, name = 'default', color = 'red')
          label = `${minutes}:${secondsLeft}`;
       }
 
-      countdownDiv.textContent = label;
+      label = '<div class="djul-label-count">' + name + '</div>' + label;
+
+      countdownDiv.innerHTML = label;
       resetAutoDetect = label;
 
        // Activer l'animation de pulsation pour les 10 dernières secondes

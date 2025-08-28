@@ -164,9 +164,14 @@ export class JulCombatSystem
     Sélection des jetons
     */
     async selectTokensDialog() {
-        // Récupère toutes les playlists du dossier "Combats"
-        let combatFolder = game.playlists.directory.folders.find(f => f.name === "Combats");
-        let playlists = combatFolder ? combatFolder.contents: [];
+        // Récupère toutes les playlists du dossier "Combats"                        
+        let playlists = [];
+        for (let playlist of game.playlists) {
+            if (playlist.folder && playlist.folder.name === "Combats") {
+                playlists.push(playlist);
+            }
+        }
+
         let preSelectedTokens = [];
 
         // On récupére tous les tokens actuellement sélectionnés sur la scène
