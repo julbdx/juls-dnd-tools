@@ -554,12 +554,12 @@ async function julQuickAttack(attackerToken, targetToken)
 async function fakeDice(result = 20)
 {
    // Force un d20 à faire un 20 naturel, avec Dice So Nice
-      const roll = await new Roll('1d20').evaluate({ async: true });
+      const roll = await new Roll('1d20').evaluate();
 
       // On modifie directement le résultat pour qu'il soit un 20
       roll.terms[0].results[0].result = result;
       roll.terms[0].results[0].active = true;
-      roll._total = value;
+      roll._total = result;
       roll._evaluated = true;
 
       // Affiche le dé avec Dice So Nice

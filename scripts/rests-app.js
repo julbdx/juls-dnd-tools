@@ -79,7 +79,7 @@ export class RestsApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 after_hp: 0,
                 resting: true,
                 exhaustion: false,
-                statuses: actor.effects.filter(s => s.label.startsWith('Exhaustion ')),
+                statuses: actor.effects.filter(s => s.name.startsWith('Exhaustion ')),
                 food: [],
             });
         }  
