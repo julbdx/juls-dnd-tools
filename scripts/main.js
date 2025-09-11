@@ -119,18 +119,15 @@ Hooks.once("init", () => {
          */
       static async build(config={}, dialog={}, message={}) {
          // Lancé manuel ?
-         console.log(config);
-         console.log(dialog);
-         console.log(message);
          const actor = config.subject;
          if (isTrustedManualRollForActor(actor))
          {
             const saveDC = config.target ?? '?';
-            const abilityLabel = CONFIG.DND5E.abilities[config.ability].label;
+            const abilityLabel = config.flavor ?? 'Jet de sauvegarde';
  
             const content = `
             <form>
-               <p>Jet de sauvegarde : <strong>${abilityLabel}</strong></p>
+               <p><strong>${abilityLabel}</strong></p>
                ${saveDC ? `<p>DD : <strong>${saveDC}</strong></p>` : ""}
             </form>
             `;

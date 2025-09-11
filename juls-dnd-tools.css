@@ -1,4 +1,7 @@
- 
+#shm-fullscreen {
+  display: block !important;
+} 
+
 #combat-dock #combatants {
   overflow: hidden !important;
 }
